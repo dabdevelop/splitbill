@@ -551,6 +551,9 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
+                        if(result === 'null'){
+                            return;
+                        }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
@@ -593,6 +596,9 @@
                     innerCall(fun, args, 0, function(params){
                         neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                             var result = resp.result;
+                            if(result === 'null'){
+                                return;
+                            }
                             try{
                                 result = JSON.parse(result);
                                 addInitiatorBill(result);
@@ -602,7 +608,6 @@
                             }
 
                         }).catch(function (err) {
-                            //cbSearch(err)
                             console.log("error:" + err.message)
                         });
 
@@ -630,6 +635,9 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
+                        if(result === 'null'){
+                            return;
+                        }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
@@ -677,6 +685,9 @@
                     innerCall(fun, args, 0, function(params){
                         neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                             var result = resp.result;
+                            if(result === 'null'){
+                                return;
+                            }
                             try{
                                 result = JSON.parse(result);
                                 addReceiverBill(result);
@@ -714,6 +725,9 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
+                        if(result === 'null'){
+                            return;
+                        }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
@@ -757,6 +771,9 @@
                     innerCall(fun, args, 0, function(params){
                         neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                             var result = resp.result;
+                            if(result === 'null'){
+                                return;
+                            }
                             try{
                                 result = JSON.parse(result);
                                 addTakerBill(result);
@@ -795,6 +812,9 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
+                        if(result === 'null'){
+                            return;
+                        }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
@@ -837,6 +857,9 @@
                     innerCall(fun, args, 0, function(params){
                         neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                             var result = resp.result;
+                            if(result === 'null'){
+                                return;
+                            }
                             try{
                                 result = JSON.parse(result);
                                 addPayerBill(result);
@@ -870,6 +893,9 @@
         innerCall(fun, args, 0, function(params){
             neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                 var result = resp.result;
+                if(result === 'null'){
+                    return;
+                }
                 try{
                     result = JSON.parse(result);
                     $("#billName").val(result.billName);
