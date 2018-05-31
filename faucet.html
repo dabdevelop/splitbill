@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="img/naslogo.png">
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="css/loading.css">
+    <link rel="stylesheet" type="text/css" href="css/loading-btn.css">
+
+    <!-- Import Javascript -->
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/nebulas.js"></script>
+    <script src="js/dappConfig.js"></script>
+    <script src="js/nebConfig.js"></script>
+
+    <title>NAS水龙头</title>
+</head>
+<body>
+
+<section class="referrer-section" id="one-click-airdrop-section">
+    <div class="pricing-header px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+        <h2 class="display-5">NAS水龙头</h2>
+    </div>
+    <div class="container">
+        <div class="card-deck mb-3 text-center">
+            <div class="card mb-4 box-shadow">
+                <div class="card-body">
+                    <input type="text" id="account" class="form-control" placeholder="输入NAS接收地址" value="" name="account"><br>
+                    <button type="button" id="oneClick" class="btn btn-primary" onclick="oneClick()" style="margin: 10px">领取NAS</button>
+                    <button type="button" class="btn btn-outline-primary" hidden="hidden" id="viewAddressButton"><a id="viewAddress">查看地址</a></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    "use strict";
+    //here we use neb.js to call the "get" function to search from the Dictionary
+    var nebulas = require("nebulas");
+    var Account = nebulas.Account;
+    var neb = new nebulas.Neb();
+    var Utils = nebulas.Utils;
+    var Unit = nebulas.Unit;
+    var Transaction = nebulas.Transaction;
+    neb.setRequest(new nebulas.HttpRequest(rpcURL));
+
+
+    var hasOneClicked = false;
+    var address = '';
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function getTransactionReceipt(hash, callback){
+        $.post(rpcURL + '/v1/user/getTransactionReceipt', JSON.stringify({
+            "hash": hash
+        }), function (resp) {
+            callback(resp)
+        })
+    }
+
+    function recheckTransactionReceipt(hash, cb) {
+        var task = setInterval(function () {
+            getTransactionReceipt(hash, function (resp) {
+                var status = resp.result.status;
+                if(status == 1){
+                    clearInterval(task);
+                    cb();
+                }
+            })
+        }, 1000);
+    }
+
+    function oneClick(){
+        if(!hasOneClicked){
+            address = $("#account").val().trim();
+            if(Account.isValidAddress(address)) {
+                sendFreeNas(address, function () {
+                    $('#message').html('转账成功。您的账号地址如下:');
+                    $('#newWallet').html(address).prop('href', 'https://explorer.nebulas.io/#/address/' + address).prop('target', '_blank_');
+                    $('#prepareWallet').modal('show');
+                    $("#viewAddressButton").attr('hidden', false);
+                    $("#oneClick").attr('hidden', true);
+                    $("#pendingBTN").attr('hidden', true);
+                    $("#viewAddress").prop('href', 'https://explorer.nebulas.io/#/address/' + address).prop('target', '_blank_');
+                });
+            } else {
+                alert('星云账号地址格式不正确!')
+            }
+        } else {
+            $('#newWallet').html(address).prop('href', 'https://explorer.nebulas.io/#/address/' + address).prop('target', '_blank_');
+            $(document).ready(function(){
+                $("#prepareWallet").modal('show');
+            });
+        }
+    }
+
+
+    function sendFreeNas(toAddress, callback) {
+//        faucetValue = 0;
+        var account, tx, txhash;
+        account = Account.NewAccount();
+        account.setPrivateKey(faucets[getRandomInt(0, 100)]);
+        neb.api.getAccountState(account.getAddressString()).then(function (state) {
+            state = state.result || state;
+            tx = new Transaction(chainId, account, toAddress, Unit.nasToBasic(faucetValue), parseInt(state.nonce) + 1);
+            tx.signTransaction();
+            $('#newWallet').html(toAddress).prop('href', 'https://explorer.nebulas.io/#/address/' + toAddress).prop('target', '_blank_');
+            $('#prepareWallet').modal('show');
+            neb.api.sendRawTransaction(tx.toProtoString()).then(function(resp){
+                        var hash = resp.txhash;
+                        recheckTransactionReceipt(hash, function () {
+                            function clearWait(){
+                                clearInterval(wait);
+                                callback();
+                            }
+                            var wait = setInterval(clearWait, 2000);
+                        })
+                    }
+            ).catch(function (err) {
+                console.log(err);
+            })
+        }).catch(function (err) {
+            console.log(err);
+        })
+    }
+
+</script>
+
+</body>
+
+<div id="prepareWallet" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p id="message">正在为您转账，请稍等十几秒钟。您的账号地址如下: </p>
+                <p ><a id="newWallet"></a></p>
+            </div>
+            <div class="modal-footer"  style="padding-top: 10px">
+                <br>
+                <div class="btn btn-primary ld-ext-right running" id="pendingBTN">正在转账...
+                    <div class="ld ld-hourglass ld-spin-fast"></div>
+                </div>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+</html>

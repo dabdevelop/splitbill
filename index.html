@@ -1,0 +1,1053 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="img/naslogo.png">
+
+    <title>星云支付</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/form-validation.css" rel="stylesheet">
+
+    <!-- Loading CSS -->
+    <link rel="stylesheet" type="text/css" href="css/loading.css">
+    <link rel="stylesheet" type="text/css" href="css/loading-btn.css">
+
+
+    <!-- Import Javascript -->
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/nebulas.js"></script>
+    <script src="js/nebPay.js"></script>
+    <script src="js/dappConfig.js"></script>
+    <script src="js/nebConfig.js"></script>
+    <script src="js/mustache.min.js"></script>
+    <script src="js/big-number.js"></script>
+</head>
+
+<body class="bg-light">
+
+<div class="container">
+    <div class="py-5 text-center">
+        <a href="index.html"><img class="d-block mx-auto mb-4" src="img/naslogo.png" alt="星云支付" width="72px" height="72px"></a>
+
+        <a href="index.html"class="text-dark"><h2 >星云支付</h2></a>
+
+        <p class="lead">星云支付收款服务供大家免费使用</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 order-md-2 mb-4">
+            <div class="bill-panel">
+            <h4 class="d-flex justify-content-between align-items-center mb-3  panel-heading" onclick="toggleDiv('initiatorBillDiv')">
+                <span class="text-muted">待付款</span>
+                <span class="badge badge-secondary badge-pill" id="initiatorBillNum">0</span>
+            </h4>
+            <div id="initiatorBillDiv">
+                <ul class="list-group mb-3" id="initiatorBillList">
+                </ul>
+            </div>
+            </div>
+
+            <div class="bill-panel">
+                <h4 class="d-flex justify-content-between align-items-center mb-3 panel-heading"  onclick="toggleDiv('receiverBillDiv')">
+                    <span class="text-muted">待提款</span>
+                    <span class="badge badge-secondary badge-pill" id="receiverBillNum">0</span>
+                </h4>
+                <div id="receiverBillDiv">
+                <ul class="list-group mb-3" id="receiverBillList">
+                </ul>
+                </div>
+            </div>
+
+            <div class="bill-panel">
+                <h4 class="d-flex justify-content-between align-items-center mb-3  panel-heading" onclick="toggleDiv('takerBillDiv')">
+                    <span class="text-muted">已提款</span>
+                    <span class="badge badge-secondary badge-pill" id="takerBillNum">0</span>
+                </h4>
+                <div id="takerBillDiv">
+                <ul class="list-group mb-3" id="takerBillList">
+                </ul>
+                </div>
+            </div>
+
+            <div class="bill-panel">
+                <h4 class="d-flex justify-content-between align-items-center mb-3 panel-heading" onclick="toggleDiv('payerBillDiv')">
+                    <span class="text-muted">已付款</span>
+                    <span class="badge badge-secondary badge-pill" id="payerBillNum">0</span>
+                </h4>
+                <div id="payerBillDiv">
+                <ul class="list-group mb-3" id="payerBillList">
+                </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-8 order-md-1">
+            <h4 class="mb-3">收款项信息</h4>
+
+            <form id="billForm" class="needs-validation" novalidate>
+
+                <div class="mb-3">
+                    <label for="billName">收款项目</label>
+                    <input type="text" class="form-control" id="billName" placeholder="收款项目名称" required>
+
+                    <div class="invalid-feedback">
+                        请输入收款项目名称。
+                    </div>
+                </div>
+
+
+                <div class="mb-3">
+                    <label for="initiatorName">发起人</label>
+
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">@</span>
+                        </div>
+                        <input type="text" class="form-control" id="initiatorName" placeholder="发起人名称" value=""
+                               required>
+
+                        <div class="invalid-feedback" style="width: 100%;">
+                            请输入收款项目发起人名称。
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="receiverName">收款人<span class="text-muted">(可选)</span></label>
+                        <input type="text" class="form-control" id="receiverName" placeholder="默认为发起人" value="">
+
+                        <div class="invalid-feedback">
+                            请输入收款项目收款人名称。
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="receiverAcc">收款账号<span class="text-muted">(可选)</span></label>
+                        <input type="text" class="form-control" id="receiverAcc" placeholder="默认为发起账号" value="">
+
+                        <div class="invalid-feedback">
+                            请输入收款项目收款人星云链账户地址。
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="mb-4">
+
+                <h4 class="mb-3">货币单位</h4>
+
+                <div class="d-block my-3">
+                    <div class="custom-control custom-radio">
+                        <input id="nas" name="unit" type="radio" class="custom-control-input" value="nas" checked
+                               required>
+                        <label class="custom-control-label" for="nas">星云币<span class="text-muted">(NAS)</span></label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                        <input id="cny" name="unit" type="radio" class="custom-control-input" value="cny" required>
+                        <label class="custom-control-label" for="cny">人民币<span class="text-muted">(CNY)</span></label>
+                    </div>
+                    <div class="custom-control custom-radio">
+                        <input id="usd" name="unit" type="radio" class="custom-control-input" value="usd" required>
+                        <label class="custom-control-label" for="usd">美元<span class="text-muted">(USD)</span></label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="amount" id="payAmount">总金额</label>
+                    <input type="number" step="0.01" class="form-control" name="amount" id="amount" placeholder="收款项目总金额" value="1"
+                           required>
+                    <div class="invalid-feedback">
+                        请输入收款项目总金额。
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="num" id="payNum">付款人数</label>
+                    <input type="number" class="form-control" name="num" id="num" placeholder="付款人数" value="1" required>
+                    <div class="invalid-feedback">
+                        请输入付款人数。
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="average">人均支付</label>
+                    <input type="text" class="form-control" id="average" value="1" readonly>
+                </div>
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="canTakeout" name="canTakeout"
+                           checked="checked">
+                    <label class="custom-control-label" for="canTakeout">开通收款人取款权限</label>
+                </div>
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="unconstrainedAmount">
+                    <label class="custom-control-label" for="unconstrainedAmount">不指定付款金额</label>
+                </div>
+
+                <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="unlimitedAmount" name="unlimitedAmount">
+                    <label class="custom-control-label" for="unlimitedAmount">收款项目不限总金额</label>
+                </div>
+
+                <div class="mb-3"  id="payAmountDiv" hidden="hidden">
+                    <label for="unconstrainedPayAmount">付款金额</label>
+                    <input type="number" step="0.01" class="form-control" name="amount" id="unconstrainedPayAmount" placeholder="付款金额" value="1"
+                           required>
+                    <div class="invalid-feedback">
+                        请输入付款金额。
+                    </div>
+                </div>
+
+                <div class="mb-3" id="memoDiv" hidden="hidden">
+                    <label for="memo">备注信息</label>
+                    <input type="text" class="form-control" name="memo" id="memo" placeholder="备注信息" value="">
+                    <div class="invalid-feedback">
+                        请输入付款备注信息。
+                    </div>
+                </div>
+
+            </form>
+            <hr class="mb-4">
+            <button class="btn btn-primary btn-lg btn-block" id="submit" onclick="newSplitBill()"></button>
+        </div>
+    </div>
+
+    <footer class="my-5 pt-5 text-muted text-center text-small">
+        <p class="mb-1">&copy; 2018 星云支付</p>
+        <ul class="list-inline">
+            <li class="list-inline-item"><a href="https://nebulas.io" target="_blank">星云官方网站</a></li>
+            <li class="list-inline-item"><a href="https://explorer.nebulas.io" target="_blank">星云区块浏览器</a></li>
+            <li class="list-inline-item"><a href="https://github.com/ChengOrangeJu/WebExtensionWallet" target="_blank">星云钱包插件</a>
+            </li>
+            <li class="list-inline-item"><a href="https://github.com/nebulasairdrop/nebulasairdrop.github.io"
+                                            target="_blank">项目GitHub源码</a></li>
+            <li class="list-inline-item"><a href="" id="contract">合约地址</a></li>
+            <li class="list-inline-item"><a href="faucet.html" target="_blank">NAS水龙头</a></li>
+        </ul>
+    </footer>
+</div>
+
+
+<script>
+    function toggleDiv(divId) {
+        $("#"+divId).toggle();
+    }
+    $("#initiatorBillDiv").toggle();
+    $("#receiverBillDiv").toggle();
+    $("#takerBillDiv").toggle();
+    $("#payerBillDiv").toggle();
+</script>
+
+<script src="js/popper.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/holder.min.js"></script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (function () {
+        'use strict';
+
+        window.addEventListener('load', function () {
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            var forms = document.getElementsByClassName('needs-validation');
+
+            // Loop over them and prevent submission
+            var validation = Array.prototype.filter.call(forms, function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+
+
+<script>
+
+    'use strict';
+
+    var Nebulas = require("nebulas");
+    var Account = Nebulas.Account;
+    var Transaction = Nebulas.Transaction;
+    var Utils = Nebulas.Utils;
+    var Unit = Nebulas.Unit;
+
+    var neb = new Nebulas.Neb();
+    neb.setRequest(new Nebulas.HttpRequest(rpcURL));
+
+    var CNY = 0;
+    var USD = 0;
+    var UNIT = 'nas';
+    var rate = {nas: 1, cny: CNY, usd: USD};
+    var canTakeout = true;
+
+    function getConversionRate(callback) {
+        $.get("https://api.coinmarketcap.com/v2/ticker/1908/?convert=CNY", function (data) {
+            CNY = parseFloat(data.data.quotes.CNY.price);
+            USD = parseFloat(data.data.quotes.USD.price);
+            rate['nas'] = 1;
+            rate['cny'] = CNY;
+            rate['usd'] = USD;
+            callback();
+        });
+
+    }
+    var amount = $("#amount");
+    var average = $("#average");
+    var num = $("#num");
+
+    $("input[name='unit']").change(function () {
+        getConversionRate(function () {
+            var P_UNIT = UNIT;
+            UNIT = $("input[name='unit']:checked").val();
+            amount.val(parseFloat(amount.val()) * rate[UNIT] / rate[P_UNIT]);
+            if (parseInt(num.val()) == 0) {
+                $("#average").val(0);
+            } else {
+                num.val(parseInt(num.val()));
+                $("#average").val(parseFloat(amount.val()) / parseInt(num.val()));
+            }
+        });
+    });
+
+    amount.on('input', function (e) {
+        if (parseFloat(amount.val()) <= 0) {
+            average.val(0);
+            amount.val(0);
+            $("#unlimitedAmount").prop("checked", true);
+        } else if (parseInt(num.val()) > 0) {
+            $("#unlimitedAmount").prop("checked", false);
+            if(Math.floor(parseFloat(amount.val()) * 1000) < parseFloat(amount.val()) * 1000 ){
+                amount.val((Math.floor(parseFloat(amount.val()) * 1000) / 1000.0));
+            }
+            num.val(parseInt(num.val()));
+            average.val(parseFloat(amount.val()) / parseInt(num.val()));
+        }
+    });
+
+    num.on('input', function (e) {
+        if (parseInt(num.val()) <= 0) {
+            average.val(0);
+            num.val(0);
+            $("#unconstrainedAmount").prop("checked", true);
+        } else if (parseInt(num.val()) > 0) {
+            $("#unconstrainedAmount").prop("checked", false);
+            num.val(parseInt(num.val()));
+            average.val(parseFloat(amount.val()) / parseInt(num.val()));
+        }
+    });
+
+    $('#canTakeout').click(function () {
+        canTakeout = !!$(this).is(':checked');
+    });
+
+    $('#canTakeout').prop('disabled', true);
+
+    $('#unlimitedAmount').click(function () {
+        if ($(this).is(':checked')) {
+            amount.val(0);
+            num.val(0);
+            average.val(0);
+            $('#unconstrainedAmount').prop('checked', true).prop('disabled', true);
+            num.prop('readonly', true);
+            amount.prop('readonly', true);
+        } else {
+            $('#unconstrainedAmount').prop('checked', false).prop('disabled', false);
+            num.prop('readonly', false);
+            amount.prop('readonly', false);
+        }
+    });
+
+    $('#unconstrainedAmount').click(function () {
+        if ($(this).is(':checked')) {
+            num.val(0);
+            average.val(0);
+            num.prop('readonly', true);
+        } else {
+            num.prop('readonly', false);
+        }
+    });
+
+
+    var needCheckNASWallet = true;
+
+    function checkNASWallet() {
+
+        //to check if the extension is installed
+        //if the extension is installed, var "webExtensionWallet" will be injected in to web page
+        if (needCheckNASWallet && (typeof (webExtensionWallet) === "undefined")) {
+            $(document).ready(function () {
+                $("#noWallet").modal('show');
+            });
+            return false;
+        }
+        return true;
+    }
+
+    function disableCheckNASWallet() {
+        needCheckNASWallet = false;
+    }
+
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function getTransactionReceipt(hash, callback){
+        $.post(rpcURL + '/v1/user/getTransactionReceipt', JSON.stringify({
+            "hash": hash
+        }), function (resp) {
+            callback(resp)
+        })
+    }
+
+
+    function recheckTransactionReceipt(hash, callback) {
+        var task = setInterval(function () {
+            getTransactionReceipt(hash, function (resp) {
+                var status = resp.result.status;
+                if(status == 1){
+                    clearInterval(task);
+                    callback(resp);
+                }
+            })
+        }, 1000);
+    }
+
+    function innerCall(fun, args, value, callback) {
+        let params = {};
+        var account = Account.NewAccount();
+        account.setPrivateKey(faucets[getRandomInt(0, 100)]);
+        params.from = account;
+        params.to = dappAddress;
+        params.gasPrice = Utils.toBigNumber(1000000);
+        params.gasLimit = Utils.toBigNumber(2000000);
+        params.value = value;
+        // prepare contract
+        params.contract = {
+            "function": fun,
+            "args": JSON.stringify(args)
+        };
+        console.log(params.from.getAddressString() + ' call ' + params.to + ' @ ' + fun + ": " + JSON.stringify(args) + ' with value: ' + value);
+        callback(params);
+    }
+
+    var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
+    var nebPay = new NebPay();
+    var serialNumber;
+
+    function callNebPay(fun, args, value, callback) {
+        innerCall(fun, args, value, function (params) {
+            serialNumber = nebPay.call(params.to, params.value, params.contract.function, params.contract.args, {
+                listener: function (resp) {
+                    if (resp !== 'Error: Transaction rejected by user') {
+                        $('#packing').modal('show');
+                    }
+                    var hash = resp.txhash;
+                    recheckTransactionReceipt(hash, function (resp) {
+                        $('#packing').modal('hide');
+                        $('#packing_success').modal('show');
+                        function clearWait() {
+                            clearInterval(wait);
+                            callback(resp);
+                        }
+                        var wait = setInterval(clearWait, 2000);
+                    })
+                }
+            });
+        });
+    }
+
+
+    function validateInput() {
+        var billForm = $("#billForm");
+        billForm.removeClass('was-validated');
+        if ($("#billName").val().trim() === '' || $("#initiatorName").val().trim() === '') {
+            billForm.addClass('was-validated');
+            return false;
+        }
+        return true;
+    }
+
+    function newSplitBill() {
+        if (validateInput()) {
+            if (checkNASWallet()) {
+                //_billName, _receiverName, _receiverAcc, _initiatorName, _amount, _splitNum, _canTakeOut
+                var fun = 'newSplitBill';
+                var args = [];
+                args.push($("#billName").val().trim());
+                args.push($("#receiverName").val().trim());
+                var receiverAcc = $("#receiverAcc").val().trim();
+                if(receiverAcc === "" || Account.isValidAddress(receiverAcc)){
+                    args.push(receiverAcc);
+                    args.push($("#initiatorName").val().trim());
+                    args.push(parseFloat($("#amount").val()) / rate[UNIT] * rate['nas']);
+                    args.push(parseInt($("#num").val()));
+                    args.push(canTakeout);
+                    var value = 0;
+                    callNebPay(fun, args, value, function(resp){
+                        window.location.href = window.location.href+ "?index="+ resp.result.execute_result +"&action=pay";
+                    });
+                } else {
+                    $("#receiverAcc").val('');
+                    $('#invalidAddress').modal('show');
+                }
+            }
+        }
+    }
+
+
+    function pay(index, value, memo){
+        if (checkNASWallet()) {
+            var fun = 'pay';
+            var args = [];
+            args.push(index);
+            args.push(memo);
+            callNebPay(fun, args, value, function (resp) {
+                window.location.href = window.location.href;
+            });
+        }
+    }
+
+    function takeout(index, amount){
+        if (checkNASWallet()) {
+            var fun = 'takeout';
+            var args = [];
+            args.push(index);
+            args.push(amount);
+            var value = 0;
+            callNebPay(fun, args, value, function () {
+                window.location.href = window.location.href;
+            });
+        }
+    }
+
+    var address = '';
+    var initiatorBL = $("#initiatorBillList");
+    function addInitiatorBill(bills){
+        $("#initiatorBillNum").html(bills.length);
+        for(var i in bills){
+            if(address !== ''){
+                var fun = 'getBillByIndex';
+                var args = [];
+                args.push(bills[i]);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        try{
+                            result = JSON.parse(result);
+                            var skeleton;
+                            var data;
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{paidNum}}人已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'pay', billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'primary'};
+                            var html = Mustache.to_html(skeleton, data);
+                            var added = [];
+                            if(initiatorBL.val() !== ''){
+                                added = JSON.parse(initiatorBL.val());
+                            }
+                            if(!added.includes(parseInt(result.id))){
+                                added.push(parseInt(result.id));
+                                initiatorBL.val(JSON.stringify(added));
+                                initiatorBL.append(html);
+                            }
+                        }catch (err){
+                            //result is the error message
+                            console.log("error:" + err.message)
+                        }
+
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
+                    });
+
+                });
+            }
+        }
+    }
+
+    function getInitiatorBill(){
+        window.addEventListener('message', function (e) {
+            if (e.data.data && !!e.data.data.account) {
+                address = e.data.data.account;
+                if(address !== ''){
+                    var fun = 'getInitiatorBill';
+                    var args = [];
+                    args.push(address);
+                    innerCall(fun, args, 0, function(params){
+                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                            var result = resp.result;
+                            try{
+                                result = JSON.parse(result);
+                                addInitiatorBill(result);
+                            }catch (err){
+                                //result is the error message
+                                console.log("error:" + err.message)
+                            }
+
+                        }).catch(function (err) {
+                            //cbSearch(err)
+                            console.log("error:" + err.message)
+                        });
+
+                    });
+                }
+            }
+        });
+
+        window.postMessage({
+            "target": "contentscript",
+            "data": {},
+            "method": "getAccount",
+        }, "*");
+
+    }
+
+    var receiverBL = $("#receiverBillList");
+    function addReceiverBill(bills){
+        $("#receiverBillNum").html(0);
+        for(var i in bills){
+            if(address !== ''){
+                var fun = 'getBillByIndex';
+                var args = [];
+                args.push(bills[i]);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        try{
+                            result = JSON.parse(result);
+                            var skeleton;
+                            var data;
+                            var toTake = Unit.fromBasic(result.paid, "nas") - Unit.fromBasic(result.takenOut, "nas");
+                            if(result.validLimit){
+                                toTake = Math.min(Unit.fromBasic(result.takeOutLimit, "nas"), toTake);
+                            }
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{amountToTakeout}}NAS等待提款</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'takeout', billName: result.billName, amountToTakeout: toTake, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'success'};
+                            var html = Mustache.to_html(skeleton, data);
+                            var added = [];
+                            if(receiverBL.val() !== ''){
+                                added = JSON.parse(receiverBL.val());
+                            }
+                            if(!added.includes(parseInt(result.id)) && toTake > 0 && result.receiverAcc === address){
+                                added.push(parseInt(result.id));
+                                receiverBL.val(JSON.stringify(added));
+                                receiverBL.append(html);
+                                $("#receiverBillNum").html(parseInt($("#receiverBillNum").text()) + 1);
+                            }
+                        }catch (err){
+                            //result is the error message
+                            console.log("error:" + err.message)
+                        }
+
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
+                    });
+
+                });
+            }
+        }
+    }
+
+    function getReceiverBill(){
+        window.addEventListener('message', function (e) {
+            if (e.data.data && !!e.data.data.account) {
+                address = e.data.data.account;
+                if(address !== ''){
+                    var fun = 'getReceiverBill';
+                    var args = [];
+                    args.push(address);
+                    innerCall(fun, args, 0, function(params){
+                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                            var result = resp.result;
+                            try{
+                                result = JSON.parse(result);
+                                addReceiverBill(result);
+                            }catch (err){
+                                //result is the error message
+                                console.log("error:" + err.message)
+                            }
+
+                        }).catch(function (err) {
+                            //cbSearch(err)
+                            console.log("error:" + err.message)
+                        });
+
+                    });
+                }
+            }
+        });
+
+        window.postMessage({
+            "target": "contentscript",
+            "data": {},
+            "method": "getAccount",
+        }, "*");
+
+    }
+
+
+    var takerBL = $("#takerBillList");
+    function addTakerBill(bills){
+        $("#takerBillNum").html(bills.length);
+        for(var i in bills){
+            if(address !== ''){
+                var fun = 'getBillByIndex';
+                var args = [];
+                args.push(bills[i]);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        try{
+                            result = JSON.parse(result);
+                            var skeleton;
+                            var data;
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已提款{{takenOut}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'takenOut', billName: result.billName, paidNum: result.paidNum, takenOut: Unit.fromBasic(result.takenAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'info'};
+                            var html = Mustache.to_html(skeleton, data);
+                            var added = [];
+                            if(takerBL.val() !== ''){
+                                added = JSON.parse(takerBL.val());
+                            }
+                            if(!added.includes(parseInt(result.id))){
+                                added.push(parseInt(result.id));
+                                takerBL.val(JSON.stringify(added));
+                                takerBL.append(html);
+                            }
+                        }catch (err){
+                            //result is the error message
+                            console.log("error:" + err.message)
+                        }
+
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
+                    });
+
+                });
+            }
+        }
+    }
+
+
+    function getTakerBill(){
+        window.addEventListener('message', function (e) {
+            if (e.data.data && !!e.data.data.account) {
+                address = e.data.data.account;
+                if(address !== ''){
+                    var fun = 'getTakerBill';
+                    var args = [];
+                    args.push(address);
+                    innerCall(fun, args, 0, function(params){
+                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                            var result = resp.result;
+                            try{
+                                result = JSON.parse(result);
+                                addTakerBill(result);
+                            }catch (err){
+                                //result is the error message
+                                console.log("error:" + err.message)
+                            }
+
+                        }).catch(function (err) {
+                            //cbSearch(err)
+                            console.log("error:" + err.message)
+                        });
+
+                    });
+                }
+            }
+        });
+
+        window.postMessage({
+            "target": "contentscript",
+            "data": {},
+            "method": "getAccount",
+        }, "*");
+
+    }
+
+
+    var payerBL = $("#payerBillList");
+    function addPayerBill(bills){
+        $("#payerBillNum").html(bills.length);
+        for(var i in bills){
+            if(address !== ''){
+                var fun = 'getBillByIndex';
+                var args = [];
+                args.push(bills[i]);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        try{
+                            result = JSON.parse(result);
+                            var skeleton;
+                            var data;
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'view', billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paidAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'warning'};
+                            var html = Mustache.to_html(skeleton, data);
+                            var added = [];
+                            if(payerBL.val() !== ''){
+                                added = JSON.parse(payerBL.val());
+                            }
+                            if(!added.includes(parseInt(result.id))){
+                                added.push(parseInt(result.id));
+                                payerBL.val(JSON.stringify(added));
+                                payerBL.append(html);
+                            }
+                        }catch (err){
+                            //result is the error message
+                            console.log("error:" + err.message)
+                        }
+
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
+                    });
+
+                });
+            }
+        }
+    }
+
+    function getPayerBill(){
+        window.addEventListener('message', function (e) {
+            if (e.data.data && !!e.data.data.account) {
+                address = e.data.data.account;
+                if(address !== ''){
+                    var fun = 'getPayerBill';
+                    var args = [];
+                    args.push(address);
+                    innerCall(fun, args, 0, function(params){
+                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                            var result = resp.result;
+                            try{
+                                result = JSON.parse(result);
+                                addPayerBill(result);
+                            }catch (err){
+                                //result is the error message
+                                console.log("error:" + err.message)
+                            }
+
+                        }).catch(function (err) {
+                            //cbSearch(err)
+                            console.log("error:" + err.message)
+                        });
+
+                    });
+                }
+            }
+        });
+
+        window.postMessage({
+            "target": "contentscript",
+            "data": {},
+            "method": "getAccount",
+        }, "*");
+
+    }
+
+    function getSplitBill(index, callback){
+        var fun = 'getBillByIndex';
+        var args = [];
+        args.push(index);
+        innerCall(fun, args, 0, function(params){
+            neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                var result = resp.result;
+                try{
+                    result = JSON.parse(result);
+                    $("#billName").val(result.billName);
+                    $("#initiatorName").val(result.initiatorName);
+                    $("#receiverName").val(result.receiverName);
+                    $("#receiverAcc").val(result.receiverAcc);
+                    $("#payAmount").html( '总金额: (' + Unit.fromBasic(result.paid, 'nas') +' NAS已付)');
+                    $("#amount").val(Unit.fromBasic(result.amount, 'nas'));
+                    $("#payNum").html('付款人数: (' + result.paidNum +'人已付)' );
+                    $("#num").val(result.splitNum);
+                    $("#average").val(Unit.fromBasic(result.billEach, 'nas'));
+
+                    if(action === 'pay'){
+                        $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ pay(parseInt(result.id), Unit.fromBasic(result.billEach, 'nas'), $('#memo').val().trim()); });
+                    } else if(action === 'takeout'){
+                        $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ takeout(parseInt(result.id), Unit.fromBasic(result.paid - result.takenOut, 'nas')) ; });
+                    }
+
+                    if(parseInt(result.amount) == 0){
+                        $("#unlimitedAmount").prop('checked', true);
+                    } else {
+                        $("#unlimitedAmount").prop('checked', false);
+                    }
+
+                    if(parseInt(result.splitNum) == 0){
+                        $("#unconstrainedAmount").prop('checked', true);
+                        if(action === 'pay'){
+                            $("#payAmountDiv").prop('hidden', false);
+                            $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){
+                                if(parseFloat($("#unconstrainedPayAmount").val()) > 0)
+                                    pay(parseInt(result.id), $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
+                        }
+                    } else {
+                        $("#unconstrainedAmount").prop('checked', false);
+                        $("#payAmountDiv").prop('hidden', true);
+                    }
+
+                    callback()
+                }catch (err){
+                    //result is the error message
+                    console.log("error:" + err.message)
+                }
+
+            }).catch(function (err) {
+                //cbSearch(err)
+                console.log("error:" + err.message)
+            });
+
+        });
+    }
+
+
+    var urlParams = new URLSearchParams(window.location.search);
+    var index;
+    var action;
+    if(urlParams.has('index')){
+        index = urlParams.get('index');
+
+        if(urlParams.has('action')){
+            action = urlParams.get('action');
+            if(action === 'pay'){
+                $("#submit").html("确认付款").prop('disabled', true);
+                $('#memoDiv').prop('hidden', false);
+            } else if(action === 'takeout'){
+                $("#submit").html("确认提款").prop('disabled', true);
+            } else if(action === 'takenOut'){
+                $("#submit").html("已提款").prop('disabled', true);
+            } else if(action === 'view'){
+                $("#submit").html("已付款").prop('disabled', true);
+            } else{
+                action = 'pay';
+                $("#submit").html("确认付款").prop('disabled', true);
+            }
+        } else {
+            action = 'pay';
+            $("#submit").html("确认付款").prop('disabled', true);
+            $('#memoDiv').prop('hidden', false);
+        }
+
+        $("#billName").prop('readonly', true);
+        $("#initiatorName").prop('readonly', true);
+        $("#receiverName").prop('readonly', true);
+        $("#receiverAcc").prop('readonly', true);
+        $("#amount").prop('readonly', true);
+        $("#num").prop('readonly', true);
+        $("#canTakeout").prop('disabled', true);
+        $("#unlimitedAmount").prop('disabled', true);
+        $("#unconstrainedAmount").prop('disabled', true);
+
+
+        getSplitBill(index, function(){
+        });
+        getInitiatorBill();
+        getReceiverBill();
+        getTakerBill();
+        getPayerBill();
+    } else{
+        $("#submit").html("确认收款");
+        getInitiatorBill();
+        getReceiverBill();
+        getTakerBill();
+        getPayerBill();
+    }
+
+
+</script>
+</body>
+
+
+<div id="noWallet" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">警告</h4>
+            </div>
+            <div class="modal-body">
+                <p>未安装星云钱包插件。请使用谷歌(Chrome)浏览器并且安装<a href="https://github.com/ChengOrangeJu/WebExtensionWallet" target="_blank">星云钱包插件</a>或者使用<a href="https://nano.nebulas.io"
+                target="_blank">星云手机钱包</a>。</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="disableCheckNASWallet()">
+                    我已安装
+                </button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<div id="invalidAddress" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">警告</h4>
+            </div>
+            <div class="modal-body">
+                <p>星云账号地址格式错误!</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div id="packing" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p>交易正在打包, 请稍等十几秒钟。</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+
+                <div class="btn btn-primary ld-ext-right running">正在打包交易...
+                    <div class="ld ld-hourglass ld-spin-fast"></div>
+                </div>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div id="packing_success" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p>交易打包成功!</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+</html>
