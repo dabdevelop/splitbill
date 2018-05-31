@@ -162,7 +162,7 @@
 
                 <div class="mb-3">
                     <label for="amount" id="payAmount">总金额</label>
-                    <input type="number" step="0.01" class="form-control" name="amount" id="amount" placeholder="收款项目总金额" value="1"
+                    <input type="number" step="0.01" class="form-control" name="amount" id="amount" placeholder="收款项目总金额" value="0"
                            required>
                     <div class="invalid-feedback">
                         请输入收款项目总金额。
@@ -171,7 +171,7 @@
 
                 <div class="mb-3">
                     <label for="num" id="payNum">付款人数</label>
-                    <input type="number" class="form-control" name="num" id="num" placeholder="付款人数" value="1" required>
+                    <input type="number" class="form-control" name="num" id="num" placeholder="付款人数" value="0" required>
                     <div class="invalid-feedback">
                         请输入付款人数。
                     </div>
@@ -179,7 +179,7 @@
 
                 <div class="mb-3">
                     <label for="average">人均支付</label>
-                    <input type="text" class="form-control" id="average" value="1" readonly>
+                    <input type="text" class="form-control" id="average" value="0" readonly>
                 </div>
 
                 <div class="custom-control custom-checkbox">
@@ -200,7 +200,7 @@
 
                 <div class="mb-3"  id="payAmountDiv" hidden="hidden">
                     <label for="unconstrainedPayAmount">付款金额</label>
-                    <input type="number" step="0.01" class="form-control" name="amount" id="unconstrainedPayAmount" placeholder="付款金额" value="1"
+                    <input type="number" step="0.01" class="form-control" name="amount" id="unconstrainedPayAmount" placeholder="付款金额" value="0"
                            required>
                     <div class="invalid-feedback">
                         请输入付款金额。
@@ -245,7 +245,9 @@
     $("#receiverBillDiv").toggle();
     $("#takerBillDiv").toggle();
     $("#payerBillDiv").toggle();
-    var dappAddress = "n1yVzcHX1BgddoerbP1tuQ4duACiPFkqhbt";
+    var chainId = 1;
+    var rpcURL = "https://mainnet.nebulas.io";
+    var dappAddress = "n1pjws9vkbfBrwNks9HmaJgYa4TjC7iMEGm";
     if(chainId == 1){
         $("#contract").prop('href','https://explorer.nebulas.io/#/address/'+ dappAddress +'#/').prop('target', '_blank_');
     } else {
@@ -503,7 +505,7 @@
                     args.push(canTakeout);
                     var value = 0;
                     callNebPay(fun, args, value, function(resp){
-                        window.location.href = window.location.href+ "?index="+ resp.result.execute_result +"&action=pay";
+                        window.location.href = window.location.href+ "?index="+ resp.result.execute_result +"&action=pay&address=" + resp.result.from;
                     });
                 } else {
                     $("#receiverAcc").val('');
@@ -521,7 +523,7 @@
             args.push(index);
             args.push(memo);
             callNebPay(fun, args, value, function (resp) {
-                window.location.href = window.location.href;
+                window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=view&address=" + resp.result.from;
             });
         }
     }
@@ -533,8 +535,8 @@
             args.push(index);
             args.push(amount);
             var value = 0;
-            callNebPay(fun, args, value, function () {
-                window.location.href = window.location.href;
+            callNebPay(fun, args, value, function (resp) {
+                window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=takenOut&address=" + resp.result.from;
             });
         }
     }
@@ -551,15 +553,15 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
-                        if(result === 'null'){
+                        if(result === 'null' || result === ''){
                             return;
                         }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{paidNum}}人已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
-                            data = {index: parseInt(result.id), action: 'pay', billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'primary'};
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{paidNum}}人已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'pay', address: address, billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'primary'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
                             if(initiatorBL.val() !== ''){
@@ -588,31 +590,31 @@
     function getInitiatorBill(){
         window.addEventListener('message', function (e) {
             if (e.data.data && !!e.data.data.account) {
-                address = e.data.data.account;
-                if(address !== ''){
-                    var fun = 'getInitiatorBill';
-                    var args = [];
-                    args.push(address);
-                    innerCall(fun, args, 0, function(params){
-                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
-                            var result = resp.result;
-                            if(result === 'null'){
-                                return;
-                            }
-                            try{
-                                result = JSON.parse(result);
-                                addInitiatorBill(result);
-                            }catch (err){
-                                //result is the error message
-                                console.log("error:" + err.message)
-                            }
-
-                        }).catch(function (err) {
+                if(address === '') address = e.data.data.account;
+            }
+            if(address !== ''){
+                var fun = 'getInitiatorBill';
+                var args = [];
+                args.push(address);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        if(result === 'null' || result === ''){
+                            return;
+                        }
+                        try{
+                            result = JSON.parse(result);
+                            addInitiatorBill(result);
+                        }catch (err){
+                            //result is the error message
                             console.log("error:" + err.message)
-                        });
+                        }
 
+                    }).catch(function (err) {
+                        console.log("error:" + err.message)
                     });
-                }
+
+                });
             }
         });
 
@@ -626,7 +628,6 @@
 
     var receiverBL = $("#receiverBillList");
     function addReceiverBill(bills){
-        $("#receiverBillNum").html(0);
         for(var i in bills){
             if(address !== ''){
                 var fun = 'getBillByIndex';
@@ -635,19 +636,19 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
-                        if(result === 'null'){
+                        if(result === 'null'  || result === ''){
                             return;
                         }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            var toTake = Unit.fromBasic(result.paid, "nas") - Unit.fromBasic(result.takenOut, "nas");
+                            var toTake = Unit.fromBasic(result.paid - result.takenOut, "nas");
                             if(result.validLimit){
                                 toTake = Math.min(Unit.fromBasic(result.takeOutLimit, "nas"), toTake);
                             }
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{amountToTakeout}}NAS等待提款</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
-                            data = {index: parseInt(result.id), action: 'takeout', billName: result.billName, amountToTakeout: toTake, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'success'};
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{amountToTakeout}}NAS等待提款</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'takeout', address: address, billName: result.billName, amountToTakeout: toTake, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'success'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
                             if(receiverBL.val() !== ''){
@@ -657,8 +658,8 @@
                                 added.push(parseInt(result.id));
                                 receiverBL.val(JSON.stringify(added));
                                 receiverBL.append(html);
-                                $("#receiverBillNum").html(parseInt($("#receiverBillNum").text()) + 1);
                             }
+                            $("#receiverBillNum").html($("#receiverBillList li").length);
                         }catch (err){
                             //result is the error message
                             console.log("error:" + err.message)
@@ -677,33 +678,35 @@
     function getReceiverBill(){
         window.addEventListener('message', function (e) {
             if (e.data.data && !!e.data.data.account) {
-                address = e.data.data.account;
-                if(address !== ''){
-                    var fun = 'getReceiverBill';
-                    var args = [];
-                    args.push(address);
-                    innerCall(fun, args, 0, function(params){
-                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
-                            var result = resp.result;
-                            if(result === 'null'){
-                                return;
-                            }
-                            try{
-                                result = JSON.parse(result);
-                                addReceiverBill(result);
-                            }catch (err){
-                                //result is the error message
-                                console.log("error:" + err.message)
-                            }
-
-                        }).catch(function (err) {
-                            //cbSearch(err)
-                            console.log("error:" + err.message)
-                        });
-
-                    });
-                }
+                if(address === '') address = e.data.data.account;
             }
+
+            if(address !== ''){
+                var fun = 'getReceiverBill';
+                var args = [];
+                args.push(address);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        if(result === 'null' || result === ''){
+                            return;
+                        }
+                        try{
+                            result = JSON.parse(result);
+                            addReceiverBill(result);
+                        }catch (err){
+                            //result is the error message
+                            console.log("error:" + err.message)
+                        }
+
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
+                    });
+
+                });
+            }
+
         });
 
         window.postMessage({
@@ -725,15 +728,15 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
-                        if(result === 'null'){
+                        if(result === 'null'  || result === ''){
                             return;
                         }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已提款{{takenOut}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
-                            data = {index: parseInt(result.id), action: 'takenOut', billName: result.billName, paidNum: result.paidNum, takenOut: Unit.fromBasic(result.takenAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'info'};
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已提款{{takenOut}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'takenOut', address: address, billName: result.billName, paidNum: result.paidNum, takenOut: Unit.fromBasic(result.takenAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'info'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
                             if(takerBL.val() !== ''){
@@ -763,32 +766,33 @@
     function getTakerBill(){
         window.addEventListener('message', function (e) {
             if (e.data.data && !!e.data.data.account) {
-                address = e.data.data.account;
-                if(address !== ''){
-                    var fun = 'getTakerBill';
-                    var args = [];
-                    args.push(address);
-                    innerCall(fun, args, 0, function(params){
-                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
-                            var result = resp.result;
-                            if(result === 'null'){
-                                return;
-                            }
-                            try{
-                                result = JSON.parse(result);
-                                addTakerBill(result);
-                            }catch (err){
-                                //result is the error message
-                                console.log("error:" + err.message)
-                            }
+                if(address === '') address = e.data.data.account;
+            }
 
-                        }).catch(function (err) {
-                            //cbSearch(err)
+            if(address !== ''){
+                var fun = 'getTakerBill';
+                var args = [];
+                args.push(address);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        if(result === 'null' || result === ''){
+                            return;
+                        }
+                        try{
+                            result = JSON.parse(result);
+                            addTakerBill(result);
+                        }catch (err){
+                            //result is the error message
                             console.log("error:" + err.message)
-                        });
+                        }
 
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
                     });
-                }
+
+                });
             }
         });
 
@@ -812,15 +816,15 @@
                 innerCall(fun, args, 0, function(params){
                     neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                         var result = resp.result;
-                        if(result === 'null'){
+                        if(result === 'null' || result === ''){
                             return;
                         }
                         try{
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
-                            data = {index: parseInt(result.id), action: 'view', billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paidAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'warning'};
+                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            data = {index: parseInt(result.id), action: 'view', address: address, billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paidAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'warning'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
                             if(payerBL.val() !== ''){
@@ -849,32 +853,33 @@
     function getPayerBill(){
         window.addEventListener('message', function (e) {
             if (e.data.data && !!e.data.data.account) {
-                address = e.data.data.account;
-                if(address !== ''){
-                    var fun = 'getPayerBill';
-                    var args = [];
-                    args.push(address);
-                    innerCall(fun, args, 0, function(params){
-                        neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
-                            var result = resp.result;
-                            if(result === 'null'){
-                                return;
-                            }
-                            try{
-                                result = JSON.parse(result);
-                                addPayerBill(result);
-                            }catch (err){
-                                //result is the error message
-                                console.log("error:" + err.message)
-                            }
+                if(address === '') address = e.data.data.account;
+            }
 
-                        }).catch(function (err) {
-                            //cbSearch(err)
+            if(address !== ''){
+                var fun = 'getPayerBill';
+                var args = [];
+                args.push(address);
+                innerCall(fun, args, 0, function(params){
+                    neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
+                        var result = resp.result;
+                        if(result === 'null' || result === ''){
+                            return;
+                        }
+                        try{
+                            result = JSON.parse(result);
+                            addPayerBill(result);
+                        }catch (err){
+                            //result is the error message
                             console.log("error:" + err.message)
-                        });
+                        }
 
+                    }).catch(function (err) {
+                        //cbSearch(err)
+                        console.log("error:" + err.message)
                     });
-                }
+
+                });
             }
         });
 
@@ -893,7 +898,7 @@
         innerCall(fun, args, 0, function(params){
             neb.api.call(params.from.getAddressString(), params.to, params.value, 0, params.gasPrice, params.gasLimit, params.contract).then(function (resp) {
                 var result = resp.result;
-                if(result === 'null'){
+                if(result === 'null' || result === ''){
                     return;
                 }
                 try{
@@ -907,6 +912,7 @@
                     $("#payNum").html('付款人数: (' + result.paidNum +'人已付)' );
                     $("#num").val(result.splitNum);
                     $("#average").val(Unit.fromBasic(result.billEach, 'nas'));
+                    $("#unconstrainedPayAmount").val(Unit.fromBasic(result.billEach, 'nas'));
 
                     if(action === 'pay'){
                         $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ pay(parseInt(result.id), Unit.fromBasic(result.billEach, 'nas'), $('#memo').val().trim()); });
@@ -923,14 +929,13 @@
                     if(parseInt(result.splitNum) == 0){
                         $("#unconstrainedAmount").prop('checked', true);
                         if(action === 'pay'){
-                            $("#payAmountDiv").prop('hidden', false);
+                            $("#payAmountDiv").prop('disabled', false);
                             $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){
                                 if(parseFloat($("#unconstrainedPayAmount").val()) > 0)
                                     pay(parseInt(result.id), $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
                         }
                     } else {
                         $("#unconstrainedAmount").prop('checked', false);
-                        $("#payAmountDiv").prop('hidden', true);
                     }
 
                     callback()
@@ -951,6 +956,12 @@
     var urlParams = new URLSearchParams(window.location.search);
     var index;
     var action;
+    if(urlParams.has('address')){
+        address = urlParams.get('address');
+        if(!Account.isValidAddress(address)){
+            address = '';
+        }
+    }
     if(urlParams.has('index')){
         index = urlParams.get('index');
 
@@ -958,6 +969,8 @@
             action = urlParams.get('action');
             if(action === 'pay'){
                 $("#submit").html("确认付款").prop('disabled', true);
+                $("#payAmountDiv").prop('hidden', false);
+                $("#unconstrainedPayAmount").prop('disabled', true);
                 $('#memoDiv').prop('hidden', false);
             } else if(action === 'takeout'){
                 $("#submit").html("确认提款").prop('disabled', true);
@@ -971,6 +984,8 @@
             }
         } else {
             action = 'pay';
+            $("#payAmountDiv").prop('hidden', false);
+            $("#unconstrainedPayAmount").prop('disabled', true);
             $("#submit").html("确认付款").prop('disabled', true);
             $('#memoDiv').prop('hidden', false);
         }

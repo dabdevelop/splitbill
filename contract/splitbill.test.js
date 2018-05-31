@@ -13,15 +13,15 @@ var Unit = Nebulas.Unit;
 var BigNumber = require('bignumber.js');
 
 var neb = new Nebulas.Neb();
-neb.setRequest(new Nebulas.HttpRequest("https://testnet.nebulas.io"));
-var chainID = 1001;
-var sourceAccount = new Account("bc54cdadc584178044765ab301e107ff420c75dc4a8a015fce9c2b909493481b");
+neb.setRequest(new Nebulas.HttpRequest("https://mainnet.nebulas.io"));
+var chainID = 1;
+var sourceAccount = new Account("53e43d87821eec6cc995067268b8638e8764cc265f7014fdcd891164a2d26d3c");
 
 var globalParams = {
     account: sourceAccount
 };
 
-var contract = 'n1yVzcHX1BgddoerbP1tuQ4duACiPFkqhbt';
+var contract = 'n1pjws9vkbfBrwNks9HmaJgYa4TjC7iMEGm';
 console.log(sourceAccount.getAddressString());
 
 var source = require('./splitbill.js');
@@ -50,7 +50,7 @@ function deploy(){
 
 
 
-//deploy();
+deploy();
 //
 //setReceiverAccount(0, 'n1PJAYWYWsgAJSm5oFbQmTexZP3zNDpznqM');
 //setEmergency(false);
@@ -58,7 +58,7 @@ function deploy(){
 //emergencyTakeout('n1PJAYWYWsgAJSm5oFbQmTexZP3zNDpznqM', 0.003);
 //testTakeoutOne(0, 0.001);
 //testPayOne(0, 0.002);
-testPay(7);
+//testPay(7);
 //transferAdmin('n1PJAYWYWsgAJSm5oFbQmTexZP3zNDpznqM');
 //acceptAdmin();
 //end(0, false);
