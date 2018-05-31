@@ -228,7 +228,7 @@
             <li class="list-inline-item"><a href="https://explorer.nebulas.io" target="_blank">星云区块浏览器</a></li>
             <li class="list-inline-item"><a href="https://github.com/ChengOrangeJu/WebExtensionWallet" target="_blank">星云钱包插件</a>
             </li>
-            <li class="list-inline-item"><a href="https://github.com/nebulasairdrop/nebulasairdrop.github.io"
+            <li class="list-inline-item"><a href="https://github.com/dabdevelop/splitbill"
                                             target="_blank">项目GitHub源码</a></li>
             <li class="list-inline-item"><a href="" id="contract">合约地址</a></li>
             <li class="list-inline-item"><a href="faucet.html" target="_blank">NAS水龙头</a></li>
@@ -245,6 +245,11 @@
     $("#receiverBillDiv").toggle();
     $("#takerBillDiv").toggle();
     $("#payerBillDiv").toggle();
+    if(chainId == 1){
+        $("#contract").prop('href','https://explorer.nebulas.io/#/address/'+ dappAddress +'#/').prop('target', '_blank_');
+    } else {
+        $("#contract").prop('href','https://explorer.nebulas.io/#/testnet/address/'+ dappAddress +'#/').prop('target', '_blank_');
+    }
 </script>
 
 <script src="js/popper.min.js"></script>
@@ -696,7 +701,6 @@
         }, "*");
 
     }
-
 
     var takerBL = $("#takerBillList");
     function addTakerBill(bills){
