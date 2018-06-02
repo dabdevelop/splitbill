@@ -35,11 +35,11 @@
 
 <div class="container">
     <div class="py-5 text-center">
-        <a href="index.html"><img class="d-block mx-auto mb-4" src="img/naslogo.png" alt="星云支付" width="72px" height="72px"></a>
+        <a href="index.html"><img class="d-block mx-auto mb-4" src="img/naspay.png" alt="星云支付" width="228px" height="48px"></a>
 
         <a href="index.html"class="text-dark"><h2 >星云支付</h2></a>
 
-        <p class="lead">星云支付收款服务供大家免费使用</p>
+        <p class="lead">星云支付收付款服务供您免费使用</p>
     </div>
 
     <div class="row">
@@ -361,8 +361,6 @@
         canTakeout = !!$(this).is(':checked');
     });
 
-    $('#canTakeout').prop('disabled', true);
-
     $('#unlimitedAmount').click(function () {
         if ($(this).is(':checked')) {
             amount.val(0);
@@ -422,8 +420,49 @@
 
 
     function recheckTransactionReceipt(hash, callback) {
+        var retry = 8;
+        var retry2 = 32;
         var task = setInterval(function () {
             getTransactionReceipt(hash, function (resp) {
+                retry --;
+                if(retry < 0){
+
+                    try{
+                        neb.api.getTransactionReceipt({hash: hash}).then(function(receipt){
+                            if (receipt.status == 0) //not in pending
+                            {
+                                $('#packing').modal('hide');
+                                clearInterval(task);
+                                var fail = $('#fail');
+                                var fail_link = $('#fail_link');
+                                if(chainId == 1){
+                                    fail_link.prop('href','https://explorer.nebulas.io/#/address/'+ dappAddress +'#/').prop('target', '_blank_');
+                                } else {
+                                    fail_link.prop('href','https://explorer.nebulas.io/#/testnet/address/'+ dappAddress +'#/').prop('target', '_blank_');
+                                }
+                                fail.modal('show');
+                            } else if (receipt.status == 2) {
+                                retry2 --;
+                                if(retry2 < 0){
+                                    clearInterval(task);
+                                    var query_overtime = $('#query_overtime');
+                                    var query_link = $('#query_link');
+                                    if(chainId == 1){
+                                        query_link.prop('href','https://explorer.nebulas.io/#/address/'+ dappAddress +'#/').prop('target', '_blank_');
+                                    } else {
+                                        query_link.prop('href','https://explorer.nebulas.io/#/testnet/address/'+ dappAddress +'#/').prop('target', '_blank_');
+                                    }
+                                    query_overtime.modal('show');
+                                }
+                            } else {
+                                clearInterval(task);
+                                callback(resp);
+                            }
+                        });
+                    } catch(err){
+                        console.log(err);
+                    }
+                }
                 var status = resp.result.status;
                 if(status == 1){
                     clearInterval(task);
@@ -456,22 +495,27 @@
     var serialNumber;
 
     function callNebPay(fun, args, value, callback) {
+        $('#confirm').modal('show');
         innerCall(fun, args, value, function (params) {
             serialNumber = nebPay.call(params.to, params.value, params.contract.function, params.contract.args, {
                 listener: function (resp) {
+                    $('#confirm').modal('hide');
                     if (resp !== 'Error: Transaction rejected by user') {
                         $('#packing').modal('show');
+                        var hash = resp.txhash;
+                        recheckTransactionReceipt(hash, function (resp) {
+                            $('#packing').modal('hide');
+                            $('#packing_success').modal('show');
+                            function clearWait() {
+                                clearInterval(wait);
+                                callback(resp);
+                            }
+                            var wait = setInterval(clearWait, 2000);
+                        })
+                    } else {
+                        $('#reject').modal('show');
                     }
-                    var hash = resp.txhash;
-                    recheckTransactionReceipt(hash, function (resp) {
-                        $('#packing').modal('hide');
-                        $('#packing_success').modal('show');
-                        function clearWait() {
-                            clearInterval(wait);
-                            callback(resp);
-                        }
-                        var wait = setInterval(clearWait, 2000);
-                    })
+
                 }
             });
         });
@@ -920,6 +964,12 @@
                         $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ takeout(parseInt(result.id), Unit.fromBasic(result.paid - result.takenOut, 'nas')) ; });
                     }
 
+                    if(result.canTakeOut){
+                        $("#canTakeout").prop('checked', true);
+                    } else {
+                        $("#canTakeout").prop('checked', false);
+                    }
+
                     if(parseInt(result.amount) == 0){
                         $("#unlimitedAmount").prop('checked', true);
                     } else {
@@ -1027,8 +1077,8 @@
                 <h4 class="modal-title">警告</h4>
             </div>
             <div class="modal-body">
-                <p>未安装星云钱包插件。请使用谷歌(Chrome)浏览器并且安装<a href="https://github.com/ChengOrangeJu/WebExtensionWallet" target="_blank">星云钱包插件</a>或者使用<a href="https://nano.nebulas.io"
-                target="_blank">星云手机钱包</a>。</p>
+                <p>检测到您未安装星云钱包插件。如果您使用的是桌面电脑，请使用谷歌(Chrome)浏览器并且安装<a href="https://github.com/ChengOrangeJu/WebExtensionWallet" target="_blank">星云钱包插件</a>。如果您在移动端使用，请安装<a href="https://nano.nebulas.io"
+                target="_blank">NAS nano</a>。</p>
             </div>
             <div class="modal-footer" style="padding-top: 10px">
                 <br>
@@ -1049,7 +1099,7 @@
                 <h4 class="modal-title">警告</h4>
             </div>
             <div class="modal-body">
-                <p>星云账号地址格式错误!</p>
+                <p>星云账号地址格式错误！</p>
             </div>
             <div class="modal-footer" style="padding-top: 10px">
                 <br>
@@ -1066,7 +1116,7 @@
                 <h4 class="modal-title">通知</h4>
             </div>
             <div class="modal-body">
-                <p>交易正在打包, 请稍等十几秒钟。</p>
+                <p>交易正在打包，请稍等十几秒钟。</p>
             </div>
             <div class="modal-footer" style="padding-top: 10px">
                 <br>
@@ -1087,7 +1137,7 @@
                 <h4 class="modal-title">通知</h4>
             </div>
             <div class="modal-body">
-                <p>交易打包成功!</p>
+                <p>交易打包成功！</p>
             </div>
             <div class="modal-footer" style="padding-top: 10px">
                 <br>
@@ -1096,4 +1146,76 @@
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
+
+
+<div id="fail" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p>交易失败，请查询<a id="fail_link">交易信息</a>！</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div id="query_overtime" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p>交易查询超时，请查询<a id="query_link">交易信息</a>！</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<div id="confirm" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p>正在调用钱包，请确认！</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<div id="reject" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">通知</h4>
+            </div>
+            <div class="modal-body">
+                <p>您已取消！</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px">
+                <br>
+                <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
 </html>
