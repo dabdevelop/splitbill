@@ -55,7 +55,7 @@
                 </button>
             </div>
             <h4 class="d-flex justify-content-between align-items-center mb-3  panel-heading" onclick="toggleDiv('initiatorBillDiv')">
-                <span class="text-muted">您的收款项</span>
+                <span class="text-muted">待付款</span>
                 <span class="badge badge-secondary badge-pill" id="initiatorBillNum">0</span>
             </h4>
             <div id="initiatorBillDiv">
@@ -66,7 +66,7 @@
 
             <div class="bill-panel">
                 <h4 class="d-flex justify-content-between align-items-center mb-3 panel-heading"  onclick="toggleDiv('receiverBillDiv')">
-                    <span class="text-muted">您的待提款</span>
+                    <span class="text-muted">待提款</span>
                     <span class="badge badge-secondary badge-pill" id="receiverBillNum">0</span>
                 </h4>
                 <div id="receiverBillDiv">
@@ -77,7 +77,7 @@
 
             <div class="bill-panel">
                 <h4 class="d-flex justify-content-between align-items-center mb-3  panel-heading" onclick="toggleDiv('takerBillDiv')">
-                    <span class="text-muted">您的已提款</span>
+                    <span class="text-muted">已提款</span>
                     <span class="badge badge-secondary badge-pill" id="takerBillNum">0</span>
                 </h4>
                 <div id="takerBillDiv">
@@ -88,7 +88,7 @@
 
             <div class="bill-panel">
                 <h4 class="d-flex justify-content-between align-items-center mb-3 panel-heading" onclick="toggleDiv('payerBillDiv')">
-                    <span class="text-muted">您的已付款</span>
+                    <span class="text-muted">已付款</span>
                     <span class="badge badge-secondary badge-pill" id="payerBillNum">0</span>
                 </h4>
                 <div id="payerBillDiv">
@@ -96,16 +96,6 @@
                 </ul>
                 </div>
             </div>
-
-            <div class="paid-panel" id="paid-panel" hidden="hidden">
-                <h4 class="d-flex justify-content-between align-items-center mb-3 panel-heading" onclick="toggleDiv('paidBillDiv')">
-                    <span class="text-muted">付款人列表</span>
-                    <span class="badge badge-secondary badge-pill" id="paidBillNum">0</span>
-                </h4>
-                <div id="paidBillDiv">
-                </div>
-            </div>
-
 
         </div>
 
@@ -264,7 +254,6 @@
     $("#receiverBillDiv").toggle();
     $("#takerBillDiv").toggle();
     $("#payerBillDiv").toggle();
-
     var chainId = 1;
     var rpcURL = "https://mainnet.nebulas.io";
     var dappAddress = "n1pjws9vkbfBrwNks9HmaJgYa4TjC7iMEGm";
@@ -1086,8 +1075,6 @@
     }
 
     var noBillShowed = false;
-    var paidBill = $("#paidBillDiv");
-    var paidBillNum = $("#paidBillNum");
 
     function getSplitBill(index, callback){
         var fun = 'getBillByIndex';
@@ -1177,17 +1164,6 @@
                         $("#unconstrainedAmount").prop('checked', false);
                     }
 
-                    var i = 0;
-                    paidBill.html('');
-                    for(var key in result.paidAccs){
-                        i ++ ;
-                        paidBillNum.html(i);
-                        var skeleton = '<a class="pu rs xj ux" href="https://explorer.nebulas.io/#/address/{{account}}" target="_blank"><span>{{accountF}}...{{accountT}} {{memo}}</span><span class="awy">{{amount}} NAS</span></a>';
-                        var data = {account: key, accountF: key.substring(0, 8), accountT: key.substring(key.length - 5, key.length), memo: result.paidAccMemos[key].substring(0, 5), amount: Unit.fromBasic(result.paidAccs[key], 'nas')};
-                        var html = Mustache.to_html(skeleton, data);
-                        paidBill.append(html);
-                    }
-
                     callback()
                 }catch (err){
                     //result is the error message
@@ -1214,8 +1190,7 @@
     }
     if(urlParams.has('index')){
         index = urlParams.get('index');
-        $("#paid-panel").prop('hidden', false);
-        paidBill.toggle();
+
         if(urlParams.has('action')){
             action = urlParams.get('action');
             if(action === 'pay'){
