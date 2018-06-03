@@ -48,8 +48,6 @@ SplitBillItem.prototype = {
             this.takeOutLimit = new BigNumber(obj.takeOutLimit);
             this.canTakeOut = obj.canTakeOut;
             this.ended = obj.ended;
-            this.frozen = obj.frozen;
-            this.dismissInitiator = obj.dismissInitiator;
         } else {
             this.id = new BigNumber(0);
             this.billName = "";
@@ -71,8 +69,6 @@ SplitBillItem.prototype = {
             this.takeOutLimit = new BigNumber(0);
             this.canTakeOut = false;
             this.ended = false;
-            this.frozen = false;
-            this.dismissInitiator = false;
         }
     }
 };
@@ -122,9 +118,6 @@ var SplitBill = function () {
     });
 
     LocalContractStorage.defineProperties(this, {
-        _admin: '',
-        _newAdmin: '',
-        _emergency: false,
         _billNum: {
             stringify: function (obj) {
                 return obj.toString(10);
@@ -154,27 +147,9 @@ var SplitBill = function () {
 
 SplitBill.prototype = {
     init: function () {
-        this._admin = Blockchain.transaction.from;
-        this._newAdmin = '';
-        this._emergency = false;
         this._billNum = new BigNumber(0);
         this._totalPaid = new BigNumber(0);
         this._totalTakenOut = new BigNumber(0);
-    },
-
-    // Returns the admin of the contract
-    admin: function () {
-        return this._admin;
-    },
-
-    // Returns the newAdmin of the contract
-    newAdmin: function () {
-        return this._newAdmin;
-    },
-
-    // Returns the emergency status of contract
-    emergency: function () {
-        return this._emergency;
     },
 
     billNum: function () {
@@ -189,77 +164,6 @@ SplitBill.prototype = {
         return this._totalTakenOut.toString(10);
     },
 
-    transferAdmin: function (_to) {
-        var to = _to.trim();
-        var from = Blockchain.transaction.from;
-        if(from != this._admin){
-            throw new Error("Permission denied.");
-        }
-
-        if(to === this._admin){
-            throw new Error("Can not transfer to yourself.");
-        }
-
-        if(to === '' || Blockchain.verifyAddress(to)){
-            if(from === this._admin){
-                this._newAdmin = to;
-            } else {
-                throw new Error("Permission denied.");
-            }
-        } else {
-            throw new Error("Invalid Address!");
-        }
-    },
-
-    acceptAdmin: function () {
-        var from = Blockchain.transaction.from;
-        if(from !== this._newAdmin){
-            throw new Error("Permission denied.");
-        }
-        if(this._newAdmin !== '' && from === this._newAdmin){
-            this._admin = from;
-            this._newAdmin = '';
-        } else {
-            throw new Error("Permission denied.");
-        }
-    },
-
-    setEmergency: function(_emergency){
-        var from = Blockchain.transaction.from;
-        if(from != this._admin){
-            throw new Error("Permission denied.");
-        }
-        if(from === this._admin){
-            this._emergency = _emergency;
-        } else {
-            throw new Error("Permission denied.");
-        }
-    },
-
-    emergencyTakeout:function(_to, _amount){
-        var to = _to.trim();
-        var amount = new BigNumber(_amount).mul(new BigNumber(10).pow(18));
-        var from = Blockchain.transaction.from;
-        if(from != this._admin){
-            throw new Error("Permission denied.");
-        }
-
-        if(!Blockchain.verifyAddress(to)){
-            throw new Error("Invalid address.");
-        }
-
-        if(this._emergency && from === this._admin && Blockchain.verifyAddress(to)){
-            this._totalTakenOut = this._totalTakenOut.plus(amount);
-            var result = Blockchain.transfer(to, amount);
-            if(!result){
-                throw new Error("Emergency takeout failed.");
-            }
-            return true;
-        } else {
-            throw new Error("Permission denied.");
-        }
-    },
-
     newSplitBill: function (_billName, _receiverName, _receiverAcc, _initiatorName, _amount, _splitNum, _canTakeOut) {
         var billName = _billName.trim();
         var receiverName = _receiverName.trim();
@@ -268,9 +172,6 @@ SplitBill.prototype = {
         var amount = parseFloat(_amount);
         var splitNum = parseInt(_splitNum);
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
 
         if (billName === "" || initiatorName === ""){
             throw new Error("Empty bill name / initiator name.");
@@ -326,10 +227,6 @@ SplitBill.prototype = {
         var index = parseInt(_index);
         var memo = _memo.trim();
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if (memo.length > 64){
             throw new Error("Memo exceed limit length.");
         }
@@ -344,10 +241,6 @@ SplitBill.prototype = {
         var splitBillItem = this.splitBills.get(index);
 
         if(splitBillItem instanceof SplitBillItem){
-
-            if(splitBillItem.frozen){
-                throw new Error("Split bill has been frozen.");
-            }
 
             if(splitBillItem.ended){
                 throw new Error("Split bill has ended.");
@@ -440,10 +333,6 @@ SplitBill.prototype = {
         var index = parseInt(_index);
         var amount = new BigNumber(_amount).mul(new BigNumber(10).pow(18));
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
         }
@@ -451,10 +340,6 @@ SplitBill.prototype = {
         var splitBillItem = this.splitBills.get(index);
         if(!(splitBillItem instanceof SplitBillItem)){
             throw new Error("Split bill does not exist.");
-        }
-
-        if(splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
         }
 
         if(!splitBillItem.canTakeOut){
@@ -470,12 +355,11 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
         if(from !== splitBillItem.receiverAcc){
             throw new Error("Permission denied.");
         }
 
-        if(from === splitBillItem.receiverAcc && !this._emergency && splitBillItem.canTakeOut && splitBillItem.paid.gte(splitBillItem.takenOut.plus(amount))){
+        if(from === splitBillItem.receiverAcc && splitBillItem.canTakeOut && splitBillItem.paid.gte(splitBillItem.takenOut.plus(amount))){
             if(!splitBillItem.takenAccs[from]){
                 splitBillItem.takenAccs[from] = new BigNumber(0);
                 splitBillItem.takenAccMemos[from] = splitBillItem.receiverName;
@@ -511,10 +395,6 @@ SplitBill.prototype = {
     setCanTakeout: function(_index, _can){
         var index = parseInt(_index);
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
         }
@@ -525,20 +405,11 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from && this._admin !== from){
+        if(splitBillItem.initiatorAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
-        if(splitBillItem.initiatorAcc === from || this._admin === from){
+        if(splitBillItem.initiatorAcc === from){
             splitBillItem.canTakeOut = _can;
             this.splitBills.put(index, splitBillItem);
         } else {
@@ -549,10 +420,6 @@ SplitBill.prototype = {
     setLimit: function(_index, _validate, _limit){
         var index = parseInt(_index);
         var limit = new BigNumber(_limit).mul(new BigNumber(10).pow(18));
-
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
 
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
@@ -568,20 +435,11 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from && this._admin !== from){
+        if(splitBillItem.initiatorAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
-        if(splitBillItem.initiatorAcc === from || this._admin === from){
+        if(splitBillItem.initiatorAcc === from){
             splitBillItem.validLimit = _validate;
             if(splitBillItem.validLimit){
                 splitBillItem.takeOutLimit = limit;
@@ -594,83 +452,9 @@ SplitBill.prototype = {
         }
     },
 
-    dismissInitiator: function (_index, _dismiss) {
-        var index = parseInt(_index);
-
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
-        if(this._billNum.lte(index)){
-            throw new Error("Split bill does not exist.");
-        }
-
-        var splitBillItem = this.splitBills.get(index);
-
-        if(!(splitBillItem instanceof SplitBillItem)){
-            throw new Error("Split bill does not exist.");
-        }
-
-        var from = Blockchain.transaction.from;
-
-        if(this._admin !== from){
-            throw new Error("Permission denied.");
-        }
-
-        if(splitBillItem instanceof SplitBillItem){
-            if(this._admin === from){
-                splitBillItem.dismissInitiator = _dismiss;
-                this.splitBills.put(index, splitBillItem);
-            } else {
-                throw new Error("Permission denied.");
-            }
-        } else {
-            throw new Error("Split bill does not exist.");
-        }
-    },
-
-    freeze: function (_index, _freeze) {
-        var index = parseInt(_index);
-
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
-        if(this._billNum.lte(index)){
-            throw new Error("Split bill does not exist.");
-        }
-
-        var splitBillItem = this.splitBills.get(index);
-
-        if(!(splitBillItem instanceof SplitBillItem)){
-            throw new Error("Split bill does not exist.");
-        }
-
-        var from = Blockchain.transaction.from;
-
-        if(this._admin !== from){
-            throw new Error("Permission denied.");
-        }
-
-        if(splitBillItem instanceof SplitBillItem){
-            if(this._admin === from){
-                splitBillItem.frozen = _freeze;
-                this.splitBills.put(index, splitBillItem);
-            } else {
-                throw new Error("Permission denied.");
-            }
-        } else {
-            throw new Error("Split bill does not exist.");
-        }
-    },
-
     end: function (_index, _ended) {
         var index = parseInt(_index);
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
         }
@@ -682,21 +466,12 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from && this._admin !== from){
+        if(splitBillItem.initiatorAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
         if(splitBillItem instanceof SplitBillItem){
-            if(splitBillItem.initiatorAcc === from  || this._admin === from){
+            if(splitBillItem.initiatorAcc === from){
                 splitBillItem.ended = _ended;
                 this.splitBills.put(index, splitBillItem);
             } else {
@@ -711,10 +486,6 @@ SplitBill.prototype = {
         var index = parseInt(_index);
         var billName = _billName.trim();
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
         }
@@ -726,21 +497,12 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from && this._admin !== from){
+        if(splitBillItem.initiatorAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
         if(splitBillItem instanceof SplitBillItem){
-            if(splitBillItem.initiatorAcc === from  || this._admin === from){
+            if(splitBillItem.initiatorAcc === from){
                 splitBillItem.billName = billName;
                 this.splitBills.put(index, splitBillItem);
             } else {
@@ -755,10 +517,6 @@ SplitBill.prototype = {
         var index = parseInt(_index);
         var initiatorName = _initiatorName.trim();
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
         }
@@ -770,21 +528,12 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from && this._admin !== from){
+        if(splitBillItem.initiatorAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
         if(splitBillItem instanceof SplitBillItem){
-            if(splitBillItem.initiatorAcc === from  || this._admin === from){
+            if(splitBillItem.initiatorAcc === from){
                 splitBillItem.initiatorName = initiatorName;
                 this.splitBills.put(index, splitBillItem);
             } else {
@@ -799,10 +548,6 @@ SplitBill.prototype = {
         var index = parseInt(_index);
         var receiverName = _receiverName.trim();
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
-
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
         }
@@ -814,21 +559,12 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from && this._admin !== from && splitBillItem.receiverAcc !== from){
+        if(splitBillItem.initiatorAcc !== from && splitBillItem.receiverAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
         if(splitBillItem instanceof SplitBillItem){
-            if(splitBillItem.initiatorAcc === from  || this._admin === from || splitBillItem.receiverAcc === from){
+            if(splitBillItem.initiatorAcc === from || splitBillItem.receiverAcc === from){
                 splitBillItem.receiverName = receiverName;
                 this.splitBills.put(index, splitBillItem);
             } else {
@@ -842,10 +578,6 @@ SplitBill.prototype = {
     setReceiverAccount: function(_index, _receiverAcc){
         var index = parseInt(_index);
         var receiverAcc = _receiverAcc.trim();
-
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
 
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
@@ -862,21 +594,12 @@ SplitBill.prototype = {
         }
 
         var from = Blockchain.transaction.from;
-
-        if(splitBillItem.initiatorAcc !== from  && this._admin !== from && splitBillItem.receiverAcc !== from){
+        if(splitBillItem.initiatorAcc !== from && splitBillItem.receiverAcc !== from){
             throw new Error("Permission denied.");
         }
 
-        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
-            throw new Error("Split bill has been frozen.");
-        }
-
-        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
-            throw new Error("Your initiator's right has been dismissed.");
-        }
-
         if(splitBillItem instanceof SplitBillItem){
-            if(splitBillItem.initiatorAcc === from || splitBillItem.receiverAcc === from || this._admin === from){
+            if(splitBillItem.initiatorAcc === from || splitBillItem.receiverAcc === from){
                 var receiverBill = this.receiverBills.get(receiverAcc) || [];
                 if(!receiverBill.includes(index)){
                     receiverBill.push(index);
@@ -896,9 +619,6 @@ SplitBill.prototype = {
         var index = parseInt(_index);
         var paidAccMemo = _paidAccMemo.trim();
 
-        if(this._emergency){
-            throw new Error("In emergency. Permission denied.");
-        }
 
         if(this._billNum.lte(index)){
             throw new Error("Split bill does not exist.");
@@ -909,11 +629,10 @@ SplitBill.prototype = {
         if(!(splitBillItem instanceof SplitBillItem)){
             throw new Error("Split bill does not exist.");
         }
-
         var from = Blockchain.transaction.from;
 
         if(splitBillItem instanceof SplitBillItem){
-            if(typeof splitBillItem.paidAccs[from] !== 'undefined'){
+            if(typeof splitBillItem.paidAccs[from] != 'undefined'){
                 splitBillItem.paidAccMemos[from] = paidAccMemo;
                 this.splitBills.put(index, splitBillItem);
             } else {
