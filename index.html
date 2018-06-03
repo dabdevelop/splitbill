@@ -301,6 +301,11 @@
     })();
 </script>
 
+<style>
+    a:hover, a:visited, a:link, a:active{
+        text-decoration: none;
+    }
+</style>
 
 <script>
 
@@ -354,14 +359,21 @@
         if (parseFloat(amount.val()) <= 0) {
             average.val(0);
             amount.val(0);
+            num.val(0);
             $("#unlimitedAmount").prop("checked", true);
+            $("#unconstrainedAmount").prop("checked", true);
+            num.prop("readonly", true);
         } else if (parseInt(num.val()) > 0) {
+            num.prop("readonly", false);
             $("#unlimitedAmount").prop("checked", false);
             if(Math.floor(parseFloat(amount.val()) * 1000) < parseFloat(amount.val()) * 1000 ){
                 amount.val((Math.floor(parseFloat(amount.val()) * 1000) / 1000.0));
             }
             num.val(parseInt(num.val()));
             average.val(parseFloat(amount.val()) / parseInt(num.val()));
+        } else {
+            num.prop("readonly", false);
+            $("#unlimitedAmount").prop("checked", false);
         }
     });
 
@@ -371,6 +383,7 @@
             num.val(0);
             $("#unconstrainedAmount").prop("checked", true);
         } else if (parseInt(num.val()) > 0) {
+            if(parseFloat(amount.val()) > 0)
             $("#unconstrainedAmount").prop("checked", false);
             num.val(parseInt(num.val()));
             average.val(parseFloat(amount.val()) / parseInt(num.val()));
@@ -750,7 +763,7 @@
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{paidNum}}人已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            skeleton = '<a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><li class="list-group-item d-flex justify-content-between lh-condensed pu rs xj ux"><div><h6 class="my-0  text-{{color}}">{{billName}}</h6><small class="text-{{color}}">{{paidNum}}人已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li></a>';
                             data = {index: parseInt(result.id), action: 'pay', address: address, billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'primary'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
@@ -838,7 +851,7 @@
                             if(result.validLimit){
                                 toTake = Math.min(Unit.fromBasic(result.takeOutLimit, "nas"), toTake);
                             }
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">{{amountToTakeout}}NAS等待提款</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            skeleton = '<a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><li class="list-group-item d-flex justify-content-between lh-condensed pu rs xj ux"><div><h6 class="my-0 text-{{color}}">{{billName}}</h6><small class="text-{{color}}">{{amountToTakeout}}NAS等待提款</small></div><span class="text-{{color}}">{{amount}} NAS</span></li></a>';
                             data = {index: parseInt(result.id), action: 'takeout', address: address, billName: result.billName, amountToTakeout: toTake, paidNum: result.paidNum, paid: Unit.fromBasic(result.paid, "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'success'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
@@ -927,7 +940,7 @@
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已提款{{takenOut}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            skeleton = '<a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><li class="list-group-item d-flex justify-content-between lh-condensed pu rs xj ux"><div><h6 class="my-0 text-{{color}}">{{billName}}</h6><small class="text-{{color}}">已提款{{takenOut}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li></a>';
                             data = {index: parseInt(result.id), action: 'takenOut', address: address, billName: result.billName, paidNum: result.paidNum, takenOut: Unit.fromBasic(result.takenAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'info'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
@@ -1016,7 +1029,7 @@
                             result = JSON.parse(result);
                             var skeleton;
                             var data;
-                            skeleton = '<li class="list-group-item d-flex justify-content-between lh-condensed"><div><a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><h6 class="my-0">{{billName}}</h6></a><small class="text-{{color}}">已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li>';
+                            skeleton = '<a href="index.html?index={{index}}&action={{action}}&address={{address}}" class="text-{{color}}"><li class="list-group-item d-flex justify-content-between lh-condensed pu rs xj ux"><div><h6 class="my-0 text-{{color}}">{{billName}}</h6><small class="text-{{color}}">已付款{{paid}}NAS</small></div><span class="text-{{color}}">{{amount}} NAS</span></li></a>';
                             data = {index: parseInt(result.id), action: 'view', address: address, billName: result.billName, paidNum: result.paidNum, paid: Unit.fromBasic(result.paidAccs[address], "nas"), amount: Unit.fromBasic(result.amount, "nas"), color: 'warning'};
                             var html = Mustache.to_html(skeleton, data);
                             var added = [];
@@ -1120,7 +1133,7 @@
                         if(result.amount != 0 && (new BigNumber(result.amount).lte(new BigNumber(result.paid)) || result.ended)){
                             submit.html("收款项已结束，完成收款 "  + Unit.fromBasic(result.paid, 'nas') + ' NAS').prop('disabled', true);
                         } else if(result.billEach > 0){
-                            if(addressWallet !== '' && new BigNumber(result.paidAccs[addressWallet]).gte(new BigNumber(result.billEach))){
+                            if(addressWallet !== '' && typeof (result.paidAccs[addressWallet]) != 'undefined' && new BigNumber(result.paidAccs[addressWallet]).gte(new BigNumber(result.billEach))){
                                 submit.html("已付款 " + Unit.fromBasic(result.paidAccs[addressWallet], 'nas') + ' NAS').prop('disabled', true);
                             } else {
                                 unconstrainedPayAmount.val(Unit.fromBasic(result.billEach, 'nas'));
