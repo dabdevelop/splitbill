@@ -450,9 +450,10 @@
     });
 
     var needCheckNASWallet = true;
+    var invoker = null;
 
-    function checkNASWallet() {
-
+    function checkNASWallet(_invoker) {
+        invoker = _invoker;
         //to check if the extension is installed
         //if the extension is installed, var "webExtensionWallet" will be injected in to web page
         if (needCheckNASWallet && (typeof (webExtensionWallet) === "undefined")) {
@@ -471,6 +472,9 @@
 
     function disableCheckNASWallet() {
         needCheckNASWallet = false;
+        if(invoker != null){
+            invoker.click();
+        }
     }
 
     function getRandomInt(min, max) {
@@ -643,7 +647,7 @@
 
     function newSplitBill() {
         if (validateInput()) {
-            if (checkNASWallet()) {
+            if (checkNASWallet(submit)) {
                 //_billName, _receiverName, _receiverAcc, _initiatorName, _amount, _splitNum, _canTakeOut
                 var fun = 'newSplitBill';
                 var args = [];
@@ -688,7 +692,7 @@
     //    setCanTakeout
 
     function pay(index, value, memo){
-        if (checkNASWallet()) {
+        if (checkNASWallet(submit)) {
             var fun = 'pay';
             var args = [];
             args.push(index);
@@ -705,7 +709,7 @@
     }
 
     function takeout(index, amount){
-        if (checkNASWallet()) {
+        if (checkNASWallet(submit)) {
             var fun = 'takeout';
             var args = [];
             args.push(index);
@@ -723,7 +727,7 @@
     }
 
     function setCanTakeout(index, can){
-        if (checkNASWallet()) {
+        if (checkNASWallet($('#canTakeout'))) {
             var fun = 'setCanTakeout';
             var args = [];
             args.push(index);
