@@ -48,6 +48,8 @@ SplitBillItem.prototype = {
             this.takeOutLimit = new BigNumber(obj.takeOutLimit);
             this.canTakeOut = obj.canTakeOut;
             this.ended = obj.ended;
+            this.frozen = obj.frozen;
+            this.dismissInitiator = obj.dismissInitiator;
         } else {
             this.id = new BigNumber(0);
             this.billName = "";
@@ -69,6 +71,8 @@ SplitBillItem.prototype = {
             this.takeOutLimit = new BigNumber(0);
             this.canTakeOut = false;
             this.ended = false;
+            this.frozen = false;
+            this.dismissInitiator = false;
         }
     }
 };
@@ -341,6 +345,10 @@ SplitBill.prototype = {
 
         if(splitBillItem instanceof SplitBillItem){
 
+            if(splitBillItem.frozen){
+                throw new Error("Split bill has been frozen.");
+            }
+
             if(splitBillItem.ended){
                 throw new Error("Split bill has ended.");
             }
@@ -445,6 +453,10 @@ SplitBill.prototype = {
             throw new Error("Split bill does not exist.");
         }
 
+        if(splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
         if(!splitBillItem.canTakeOut){
             throw new Error("Permission denied.");
         }
@@ -516,6 +528,14 @@ SplitBill.prototype = {
             throw new Error("Permission denied.");
         }
 
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
+        }
+
         if(splitBillItem.initiatorAcc === from || this._admin === from){
             splitBillItem.canTakeOut = _can;
             this.splitBills.put(index, splitBillItem);
@@ -550,6 +570,14 @@ SplitBill.prototype = {
             throw new Error("Permission denied.");
         }
 
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
+        }
+
         if(splitBillItem.initiatorAcc === from || this._admin === from){
             splitBillItem.validLimit = _validate;
             if(splitBillItem.validLimit){
@@ -560,6 +588,74 @@ SplitBill.prototype = {
             this.splitBills.put(index, splitBillItem);
         } else {
             throw new Error("Permission denied.");
+        }
+    },
+
+    dismissInitiator: function (_index, _dismiss) {
+        var index = parseInt(_index);
+
+        if(this._emergency){
+            throw new Error("In emergency. Permission denied.");
+        }
+
+        if(this._billNum.lte(index)){
+            throw new Error("Split bill does not exist.");
+        }
+
+        var splitBillItem = this.splitBills.get(index);
+
+        if(!(splitBillItem instanceof SplitBillItem)){
+            throw new Error("Split bill does not exist.");
+        }
+
+        var from = Blockchain.transaction.from;
+        if(this._admin !== from){
+            throw new Error("Permission denied.");
+        }
+
+        if(splitBillItem instanceof SplitBillItem){
+            if(this._admin === from){
+                splitBillItem.dismissInitiator = _dismiss;
+                this.splitBills.put(index, splitBillItem);
+            } else {
+                throw new Error("Permission denied.");
+            }
+        } else {
+            throw new Error("Split bill does not exist.");
+        }
+    },
+
+    freeze: function (_index, _freeze) {
+        var index = parseInt(_index);
+
+        if(this._emergency){
+            throw new Error("In emergency. Permission denied.");
+        }
+
+        if(this._billNum.lte(index)){
+            throw new Error("Split bill does not exist.");
+        }
+
+        var splitBillItem = this.splitBills.get(index);
+
+        if(!(splitBillItem instanceof SplitBillItem)){
+            throw new Error("Split bill does not exist.");
+        }
+
+        var from = Blockchain.transaction.from;
+        if(this._admin !== from){
+            throw new Error("Permission denied.");
+        }
+
+        if(splitBillItem instanceof SplitBillItem){
+            if(this._admin === from){
+                splitBillItem.frozen = _freeze;
+                this.splitBills.put(index, splitBillItem);
+            } else {
+                throw new Error("Permission denied.");
+            }
+        } else {
+            throw new Error("Split bill does not exist.");
         }
     },
 
@@ -583,6 +679,14 @@ SplitBill.prototype = {
         var from = Blockchain.transaction.from;
         if(splitBillItem.initiatorAcc !== from && this._admin !== from){
             throw new Error("Permission denied.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
         }
 
         if(splitBillItem instanceof SplitBillItem){
@@ -620,6 +724,14 @@ SplitBill.prototype = {
             throw new Error("Permission denied.");
         }
 
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
+        }
+
         if(splitBillItem instanceof SplitBillItem){
             if(splitBillItem.initiatorAcc === from  || this._admin === from){
                 splitBillItem.billName = billName;
@@ -655,6 +767,14 @@ SplitBill.prototype = {
             throw new Error("Permission denied.");
         }
 
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
+        }
+
         if(splitBillItem instanceof SplitBillItem){
             if(splitBillItem.initiatorAcc === from  || this._admin === from){
                 splitBillItem.initiatorName = initiatorName;
@@ -688,6 +808,14 @@ SplitBill.prototype = {
         var from = Blockchain.transaction.from;
         if(splitBillItem.initiatorAcc !== from && this._admin !== from){
             throw new Error("Permission denied.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
         }
 
         if(splitBillItem instanceof SplitBillItem){
@@ -729,6 +857,14 @@ SplitBill.prototype = {
             throw new Error("Permission denied.");
         }
 
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
+        }
+
         if(splitBillItem instanceof SplitBillItem){
             if(splitBillItem.initiatorAcc === from || splitBillItem.receiverAcc === from){
                 var receiverBill = this.receiverBills.get(receiverAcc) || [];
@@ -764,6 +900,15 @@ SplitBill.prototype = {
             throw new Error("Split bill does not exist.");
         }
         var from = Blockchain.transaction.from;
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.frozen){
+            throw new Error("Split bill has been frozen.");
+        }
+
+        if(splitBillItem.initiatorAcc === from && splitBillItem.dismissInitiator){
+            throw new Error("Your initiator's right has been dismissed.");
+        }
+
         if(splitBillItem instanceof SplitBillItem){
             if(typeof splitBillItem.paidAccs[from] != 'undefined'){
                 splitBillItem.paidAccMemos[from] = paidAccMemo;

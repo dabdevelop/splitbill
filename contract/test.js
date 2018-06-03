@@ -1,4 +1,4 @@
-
+"use strict";
 
 var BigNumber = require('bignumber.js');
 
@@ -49,6 +49,8 @@ SplitBillItem.prototype = {
             this.takeOutLimit = new BigNumber(obj.takeOutLimit);
             this.canTakeOut = obj.canTakeOut;
             this.ended = obj.ended;
+            this.frozen = obj.frozen;
+            this.dismissInitiator = obj.dismissInitiator;
         } else {
             this.id = new BigNumber(0);
             this.billName = "";
@@ -70,10 +72,11 @@ SplitBillItem.prototype = {
             this.takeOutLimit = new BigNumber(0);
             this.canTakeOut = false;
             this.ended = false;
+            this.frozen = false;
+            this.dismissInitiator = false;
         }
     }
 };
-
 //["Nasdrop Split Bill","Nasdrop","n1d8FX8a7MX7B2MPhq447pqf1Qy4NwC6rvc","Nasdrop",1,3,true]
 
 var a = new SplitBillItem();
@@ -90,6 +93,10 @@ a.paidAccs['n1d8FX8a7MX7B2MPhq447pqf1Qy4NwC6rvc'] = 0.5;
 a.takenAccs['n1d8FX8a7MX7B2MPhq447pqf1Qy4NwC6rvc'] = 0.3;
 a.paidAccMemos['n1d8FX8a7MX7B2MPhq447pqf1Qy4NwC6rvc'] = 'paidAccMemos';
 a.takenAccMemos['n1d8FX8a7MX7B2MPhq447pqf1Qy4NwC6rvc'] = 'takenAccMemos';
+a.canTakeOut = true;
+a.ended = true;
+a.frozen = true;
+a.dismissInitiator = true;
 
 console.log(a.toString());
 console.log(new SplitBillItem(a.toString()));

@@ -21,7 +21,7 @@ var globalParams = {
     account: sourceAccount
 };
 
-var contract = 'n1pjws9vkbfBrwNks9HmaJgYa4TjC7iMEGm';
+var contract = 'n1rXijCd81zoXRKmPHH5BzPpvcK8hqmbgsa';
 console.log(sourceAccount.getAddressString());
 
 var source = require('./splitbill.js');
