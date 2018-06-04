@@ -1213,7 +1213,7 @@
                         var skeleton = '<a class="pu rs xj ux" href="https://explorer.nebulas.io/#/address/{{account}}" target="_blank"><span>{{accountF}}...{{accountT}} {{memo}}</span><span class="awy">{{amount}} NAS</span></a>';
                         var data = {account: key, accountF: key.substring(0, 8), accountT: key.substring(key.length - 5, key.length), memo: result.paidAccMemos[key].substring(0, 5), amount: Unit.fromBasic(result.paidAccs[key], 'nas')};
                         var html = Mustache.to_html(skeleton, data);
-                        paidBill.append(html);
+                        paidBill.prepend(html);
                     }
 
                     callback()
