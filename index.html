@@ -219,7 +219,7 @@
 
                 <div class="mb-3"  id="payAmountDiv" hidden="hidden">
                     <label for="unconstrainedPayAmount">付款金额</label>
-                    <input type="number" step="0.01" class="form-control" name="amount" id="unconstrainedPayAmount" placeholder="付款金额" value="0"
+                    <input type="number" step="0.01" class="form-control" name="amount" id="unconstrainedPayAmount" placeholder="付款金额" value=""
                            required>
                     <div class="invalid-feedback">
                         请输入付款金额。
@@ -428,13 +428,11 @@
 
     unconstrainedPayAmount.on('input', function (e) {
         if (parseFloat(unconstrainedPayAmount.val()) < 0) {
-            if(parseFloat(unconstrainedPayAmount.val()) < 0)
             unconstrainedPayAmount.val(0);
             submit.val('请输入付款金额').prop('disabled', true);
         } else if (parseFloat(unconstrainedPayAmount.val()) > 0) {
-            if(unconstrainedPayAmount.val().startsWith('0'))
-            unconstrainedPayAmount.val(parseFloat(unconstrainedPayAmount.val()));
-            unconstrainedPayAmount.val(Math.ceil(parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8)) / Math.pow(10, 8));
+            if(unconstrainedPayAmount.val().startsWith('0') && !unconstrainedPayAmount.val().startsWith('0.'))
+                unconstrainedPayAmount.val(parseFloat(unconstrainedPayAmount.val()));
             submit.html("确认付款 " + parseFloat(unconstrainedPayAmount.val()) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
                 if(parseFloat(unconstrainedPayAmount.val()) > 0)
                     pay(index, $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
