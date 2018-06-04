@@ -434,6 +434,7 @@
         } else if (parseFloat(unconstrainedPayAmount.val()) > 0) {
             if(unconstrainedPayAmount.val().startsWith('0'))
             unconstrainedPayAmount.val(parseFloat(unconstrainedPayAmount.val()));
+            unconstrainedPayAmount.val(Math.ceil(parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8)) / Math.pow(10, 8));
             submit.html("确认付款 " + parseFloat(unconstrainedPayAmount.val()) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
                 if(parseFloat(unconstrainedPayAmount.val()) > 0)
                     pay(index, $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
@@ -1140,13 +1141,22 @@
                             if(addressWallet !== '' && typeof (result.paidAccs[addressWallet]) != 'undefined' && new BigNumber(result.paidAccs[addressWallet]).gte(new BigNumber(result.billEach))){
                                 submit.html("已付款 " + Unit.fromBasic(result.paidAccs[addressWallet], 'nas') + ' NAS').prop('disabled', true);
                             } else {
-                                unconstrainedPayAmount.val(Unit.fromBasic(result.billEach, 'nas'));
-                                submit.html("确认付款 "  + Unit.fromBasic(result.billEach, 'nas') + ' NAS').prop('disabled', true);
-                                $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ pay(parseInt(result.id), Unit.fromBasic(result.billEach, 'nas'), $('#memo').val().trim()); });
+                                if(Math.ceil(Unit.fromBasic(result.billEach, 'nas') * Math.pow(10, 8)) > Unit.fromBasic(result.billEach, 'nas') * Math.pow(10, 8)){
+                                    unconstrainedPayAmount.val(Math.ceil(Unit.fromBasic(result.billEach, 'nas') * Math.pow(10, 8)) / Math.pow(10, 8));
+                                    submit.html("确认付款 "  + Math.ceil(Unit.fromBasic(result.billEach, 'nas') * Math.pow(10, 8)) / Math.pow(10, 8) + ' NAS').prop('disabled', true);
+                                    $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ pay(parseInt(result.id), Math.ceil(Unit.fromBasic(result.billEach, 'nas') * Math.pow(10, 8)) / Math.pow(10, 8), $('#memo').val().trim()); });
+                                } else {
+                                    unconstrainedPayAmount.val(Unit.fromBasic(result.billEach, 'nas'));
+                                    submit.html("确认付款 "  + Unit.fromBasic(result.billEach, 'nas') + ' NAS').prop('disabled', true);
+                                    $("#submit").prop('disabled', false).prop("onclick", null).off('click').click(function(){ pay(parseInt(result.id), Unit.fromBasic(result.billEach, 'nas'), $('#memo').val().trim()); });
+
+                                }
                             }
                         } else if(parseFloat(unconstrainedPayAmount.val()) > 0){
                             if(unconstrainedPayAmount.val().startsWith('0'))
                                 unconstrainedPayAmount.val(parseFloat(unconstrainedPayAmount.val()));
+                            if(Math.ceil(parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8)) > parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8))
+                                unconstrainedPayAmount.val(Math.ceil(parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8)) / Math.pow(10, 8));
                             submit.html("确认付款 " + parseFloat(unconstrainedPayAmount.val()) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
                                 if(parseFloat(unconstrainedPayAmount.val()) > 0)
                                     pay(index, $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
