@@ -657,7 +657,7 @@
                 if(receiverAcc === "" || Account.isValidAddress(receiverAcc)){
                     args.push(receiverAcc);
                     args.push($("#initiatorName").val().trim());
-                    args.push(parseFloat($("#amount").val()) / rate[UNIT] * rate['nas']);
+                    args.push((parseFloat($("#amount").val()) / rate[UNIT] * rate['nas']).toFixed(8));
                     args.push(parseInt($("#num").val()));
                     args.push(canTakeout);
                     var value = 0;
