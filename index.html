@@ -607,7 +607,7 @@
                         return;
                     }
                 }
-                if (resp.msg === 'success') {
+                if (resp.msg === 'success' && resp.data.status == 1) {
                     clearInterval(intervalQuery);
                     callback && callback(resp.data)
                 }
@@ -692,6 +692,7 @@
                     args.push(canTakeout);
                     var value = 0;
                     callNebPay(fun, args, value, function(resp){
+                        localStorage.setItem('address',resp.from);
                         function clearWait() {
                             clearInterval(wait);
                             window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname+ "?index="+ resp.execute_result +"&action=pay&address=" + resp.from;
@@ -725,6 +726,7 @@
             args.push(index);
             args.push(memo);
             callNebPay(fun, args, value, function (resp) {
+                localStorage.setItem('address',resp.from);
                 function clearWait() {
                     clearInterval(wait);
                     window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=view&address=" + resp.from;
@@ -743,6 +745,7 @@
             args.push(amount);
             var value = 0;
             callNebPay(fun, args, value, function (resp) {
+                localStorage.setItem('address',resp.from);
                 function clearWait() {
                     clearInterval(wait);
                     window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=takenOut&address=" + resp.from;
@@ -762,6 +765,7 @@
             var value = 0;
             $('#canTakeout').prop('checked', canTakeout);
             callNebPay(fun, args, value, function (resp) {
+                localStorage.setItem('address',resp.from);
                 $('#canTakeout').prop('checked', canTakeout);
                 function clearWait() {
                     clearInterval(wait);
