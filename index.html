@@ -607,7 +607,7 @@
                         return;
                     }
                 }
-                if (resp.msg === 'success' && resp.data.status == 1) {
+                if (resp.code == 0 && (resp.data.status == 1 || resp.data.status == 0)) {
                     clearInterval(intervalQuery);
                     callback && callback(resp.data)
                 }
@@ -653,10 +653,27 @@
                 }
             });
 
+            var wait;
+            function clearWait() {
+                clearInterval(wait);
+                refresh();
+            }
+
             if(window.mobileAndTabletcheck()){
                 retryQueryTime = 10;
+
                 intervalQuery = setInterval(function () {
-                    recheckMobileTransactionReceipt(serialNumber, callback);
+                    recheckMobileTransactionReceipt(serialNumber, function(resp){
+                        if(resp.status == 1){
+                            $('#packing_refresh').modal('hide');
+                            $('#packing_success').modal('show');
+                            callback && callback(resp);
+                        } else if(resp.status == 0){
+                            $('#packing_refresh').modal('hide');
+                            $('#fail').modal('show');
+                            wait = setInterval(clearWait, 2000);
+                        }
+                    });
                 }, 3500);
             }
 
@@ -1476,7 +1493,7 @@
                 <div class="btn btn-primary ld-ext-right running">等待刷新
                     <div class="ld ld-hourglass ld-spin-fast"></div>
                 </div>
-                <button type="button" class="btn btn-default" data-dismiss="modal" onclick="refresh()">关闭</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal" onclick="">关闭</button>
             </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
