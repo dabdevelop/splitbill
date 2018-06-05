@@ -15,17 +15,16 @@ var BigNumber = require('bignumber.js');
 var neb = new Nebulas.Neb();
 neb.setRequest(new Nebulas.HttpRequest("https://mainnet.nebulas.io"));
 var chainID = 1;
-var sourceAccount = new Account("53e43d87821eec6cc995067268b8638e8764cc265f7014fdcd891164a2d26d3c");
+var sourceAccount = new Account("dbafc4ed12085345ac5f0ad24959c94e421b6c9e27e7de5a2ed1b4072c9f9684");
+
+//var sourceAccount = new Account("dbafc4ed12085345ac5f0ad24959c94e421b6c9e27e7de5a2ed1b4072c9f9684");
 
 var globalParams = {
     account: sourceAccount
 };
 
-var contract = 'n1rXijCd81zoXRKmPHH5BzPpvcK8hqmbgsa';
+var contract = 'n1xoMWQCgFJiRoKxwCEmx3AjNUN83Jvo7g6';
 console.log(sourceAccount.getAddressString());
-
-var source = require('./splitbill.js');
-
 
 function deploy(){
     innerDeploy(function (params) {
@@ -52,22 +51,22 @@ function deploy(){
 
 deploy();
 //
-//setReceiverAccount(0, 'n1PJAYWYWsgAJSm5oFbQmTexZP3zNDpznqM');
+//setReceiverAccount(0, 'n1aedmxzq8XBb3TUgPE6ms556h5ymCkrtu2');
 //setEmergency(false);
-//setCanTakeout(0, false);
+//setCanTakeout(0, true);
 //emergencyTakeout('n1PJAYWYWsgAJSm5oFbQmTexZP3zNDpznqM', 0.003);
 //testTakeoutOne(0, 0.001);
 //testPayOne(0, 0.002);
-//testPay(7);
+//testPay(0);
 //transferAdmin('n1PJAYWYWsgAJSm5oFbQmTexZP3zNDpznqM');
 //acceptAdmin();
-//end(0, false);
+//end(0, true);
 
 //setBillName(0, 'NASdrop2');
 //setInitiatorName(0, 'NASdrop2 Initiator Name');
 //setReceiverName(0, 'NASdrop receiverName Name');
-//setLimit(1, false, 0.002);
-
+//setLimit(0, true, 0.002);
+//setPaidAccountMemo(0, "Payer 1");
 
 function setLimit(index, validate, limit){
     //setLimit: function(_index, _validate, _limit)
@@ -76,6 +75,16 @@ function setLimit(index, validate, limit){
     args.push(index);
     args.push(validate);
     args.push(limit);
+    call(fun, args, 0, function(){});
+}
+
+
+function setPaidAccountMemo(index, paidAccMemo){
+    //setLimit: function(_index, _validate, _limit)
+    var fun = 'setPaidAccountMemo';
+    var args = [];
+    args.push(index);
+    args.push(paidAccMemo);
     call(fun, args, 0, function(){});
 }
 
@@ -283,12 +292,6 @@ function testPay(index){
                     args.push('I am fine.4');
                     var value = 0.003;
                     call(fun, args, value, function(){
-                        var fun = 'pay';
-                        var args = [];
-                        args.push(index);
-                        args.push('I am fine.5');
-                        var value = 0.002;
-
                     });
                 });
             });
@@ -398,7 +401,7 @@ function innerDeploy(callback){
     params.value = 0;
 
     const fs = require('fs');
-    var source = fs.readFileSync('/Users/taofeng/Github/SplitBill/contract/splitbill.js', "utf-8");
+    var source = fs.readFileSync('/Users/taofeng/Github/SplitBill/contract/splitbill_noadmin.js', "utf-8");
 
     // prepare contract
     params.contract = {

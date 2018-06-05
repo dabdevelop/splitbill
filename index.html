@@ -267,7 +267,7 @@
 
     var chainId = 1;
     var rpcURL = "https://mainnet.nebulas.io";
-    var dappAddress = "n1pjws9vkbfBrwNks9HmaJgYa4TjC7iMEGm";
+    var dappAddress = "n1xoMWQCgFJiRoKxwCEmx3AjNUN83Jvo7g6";
     if(chainId == 1){
         $("#contract").prop('href','https://explorer.nebulas.io/#/address/'+ dappAddress +'#/').prop('target', '_blank_');
     } else {
@@ -348,6 +348,11 @@
             amount.val(parseFloat(amount.val()) * rate[UNIT] / rate[P_UNIT]);
             if (parseInt(num.val()) == 0) {
                 $("#average").val(0);
+                if(action === 'pay'){
+                    submit.html("确认付款 " + parseFloat(parseFloat(unconstrainedPayAmount.val() / rate[UNIT] * rate['nas']).toFixed(8)) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
+                        if(parseFloat(unconstrainedPayAmount.val()) > 0)
+                            pay(index, parseFloat(parseFloat(unconstrainedPayAmount.val() / rate[UNIT] * rate['nas']).toFixed(8)), $('#memo').val().trim()); });
+                }
             } else {
                 num.val(parseInt(num.val()));
                 $("#average").val(parseFloat(amount.val()) / parseInt(num.val()));
@@ -433,9 +438,9 @@
         } else if (parseFloat(unconstrainedPayAmount.val()) > 0) {
             if(unconstrainedPayAmount.val().startsWith('0') && !unconstrainedPayAmount.val().startsWith('0.'))
                 unconstrainedPayAmount.val(parseFloat(unconstrainedPayAmount.val()));
-            submit.html("确认付款 " + parseFloat(unconstrainedPayAmount.val()) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
+            submit.html("确认付款 " + parseFloat(parseFloat(unconstrainedPayAmount.val() / rate[UNIT] * rate['nas']).toFixed(8)) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
                 if(parseFloat(unconstrainedPayAmount.val()) > 0)
-                    pay(index, $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
+                    pay(index, parseFloat(parseFloat(unconstrainedPayAmount.val() / rate[UNIT] * rate['nas']).toFixed(8)), $('#memo').val().trim()); });
         } else if (unconstrainedPayAmount.val() === '') {
             submit.prop('disabled', true);
             submit.val('请输入付款金额');
@@ -448,7 +453,8 @@
         }
     });
 
-    var needCheckNASWallet = true;
+    var needCheckNASWallet = localStorage.getItem('needCheckNASWallet') || '1';
+    needCheckNASWallet = parseInt(needCheckNASWallet);
     var invoker = null;
 
     function checkNASWallet(_invoker) {
@@ -471,6 +477,7 @@
 
     function disableCheckNASWallet() {
         needCheckNASWallet = false;
+        localStorage.setItem('needCheckNASWallet', 0);
         if(invoker != null){
             invoker.click();
         }
@@ -484,10 +491,9 @@
         $.post(rpcURL + '/v1/user/getTransactionReceipt', JSON.stringify({
             "hash": hash
         }), function (resp) {
-            callback(resp)
+            callback && callback(resp)
         })
     }
-
 
     function recheckTransactionReceipt(hash, callback) {
         var retry = 8;
@@ -526,7 +532,7 @@
                                 }
                             } else {
                                 clearInterval(task);
-                                callback(resp);
+                                callback && callback(resp.result);
                             }
                         });
                     } catch(err){
@@ -536,7 +542,7 @@
                 var status = resp.result.status;
                 if(status == 1){
                     clearInterval(task);
-                    callback(resp);
+                    callback && callback(resp.result);
                 }
             })
         }, 1000);
@@ -570,49 +576,75 @@
         window.location.href = window.location.href;
     }
 
-    var packingRefreshShowed = false;
 
-    function funcIntervalQuery(callback) {
-        nebPay.queryPayInfo(serialNumber)   //search transaction result from server (result upload to server by app)
-                .then(function (resp) {
-                    var respObject = JSON.parse(resp);
-                    if(!packingRefreshShowed){
-                        packingRefreshShowed = true;
-                        $('#confirm').modal('hide');
-                        $('#packing_refresh').modal('show');
+    function getMobileTransactionReceipt(serialNumber, callback){
+        $.get("https://pay.nebulas.io/api/mainnet/pay/query?payId=" + serialNumber, function (resp) {
+            callback && callback(resp)
+        })
+    }
+
+    var retryQueryTime = 10;
+
+    function recheckMobileTransactionReceipt(serialNumber, callback) {
+        retryQueryTime --;
+
+        getMobileTransactionReceipt(serialNumber, function (resp) {
+            $('#confirm').modal('hide');
+            $('#packing_refresh').modal('show');
+            if (resp instanceof Object) {
+                if(retryQueryTime <= 0){
+//            {"code":1,"data":{},"msg":"payId 9IMybuY6eQkouc2Avwb8rEcae7oiZLnd does not exist"}
+                    clearInterval(intervalQuery);
+                    if(resp.code == 1){
+                        var query_overtime = $('#query_overtime');
+                        var query_link = $('#query_link');
+                        if(chainId == 1){
+                            query_link.prop('href','https://explorer.nebulas.io/#/address/'+ dappAddress +'#/').prop('target', '_blank_');
+                        } else {
+                            query_link.prop('href','https://explorer.nebulas.io/#/testnet/address/'+ dappAddress +'#/').prop('target', '_blank_');
+                        }
+                        query_overtime.modal('show');
+                        return;
                     }
-                    function clearWait() {
-                        clearInterval(wait);
-                        window.location.href = window.location.href;
-                    }
-                    if(respObject.code === 0){
-                        clearInterval(intervalQuery);
-                        var wait = setInterval(clearWait, 3000);
-                    }
-                })
-                .catch(function (err) {
-                    console.log(err);
-                });
+                }
+                if (resp.msg === 'success') {
+                    clearInterval(intervalQuery);
+                    callback && callback(resp.data)
+                }
+            }
+
+        })
     }
 
     var NebPay = require("nebpay");     //https://github.com/nebulasio/nebPay
     var nebPay = new NebPay();
-    var serialNumber;
     var intervalQuery;
 
     function callNebPay(fun, args, value, callback) {
         $('#confirm').modal('show');
+        var serialNumber;
         innerCall(fun, args, value, function (params) {
             serialNumber = nebPay.call(params.to, params.value, params.contract.function, params.contract.args, {
+                qrcode: {
+                    showQRCode: false
+                },
+                goods: {
+                    name: "test",
+                    desc: "test goods"
+                },
+                callback:"https://pay.nebulas.io/api/mainnet/pay",
                 listener: function (resp) {
                     $('#confirm').modal('hide');
+                    if(window.mobileAndTabletcheck()){
+                       return;
+                    }
                     if (resp !== 'Error: Transaction rejected by user') {
                         $('#packing').modal('show');
                         var hash = resp.txhash;
                         recheckTransactionReceipt(hash, function (resp) {
                             $('#packing').modal('hide');
                             $('#packing_success').modal('show');
-                            callback(resp);
+                            callback && callback(resp);
                         })
                     } else {
                         $('#reject').modal('show');
@@ -622,11 +654,10 @@
             });
 
             if(window.mobileAndTabletcheck()){
-                $('#confirm').modal('hide');
-                packingRefreshShowed = false;
+                retryQueryTime = 10;
                 intervalQuery = setInterval(function () {
-                    funcIntervalQuery(callback);
-                }, 5000);
+                    recheckMobileTransactionReceipt(serialNumber, callback);
+                }, 3500);
             }
 
 
@@ -663,7 +694,7 @@
                     callNebPay(fun, args, value, function(resp){
                         function clearWait() {
                             clearInterval(wait);
-                            window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname+ "?index="+ resp.result.execute_result +"&action=pay&address=" + resp.result.from;
+                            window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname+ "?index="+ resp.execute_result +"&action=pay&address=" + resp.from;
                         }
                         var wait = setInterval(clearWait, 2000);
                     });
@@ -687,9 +718,6 @@
         }
     }
 
-
-    //    setCanTakeout
-
     function pay(index, value, memo){
         if (checkNASWallet(submit)) {
             var fun = 'pay';
@@ -699,7 +727,7 @@
             callNebPay(fun, args, value, function (resp) {
                 function clearWait() {
                     clearInterval(wait);
-                    window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=view&address=" + resp.result.from;
+                    window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=view&address=" + resp.from;
                 }
                 var wait = setInterval(clearWait, 2000);
 
@@ -717,7 +745,7 @@
             callNebPay(fun, args, value, function (resp) {
                 function clearWait() {
                     clearInterval(wait);
-                    window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=takenOut&address=" + resp.result.from;
+                    window.location.href = window.location.protocol + '//' + window.location.host + window.location.pathname + "?index=" + index +"&action=takenOut&address=" + resp.from;
                 }
                 var wait = setInterval(clearWait, 2000);
 
@@ -1155,9 +1183,9 @@
                                 unconstrainedPayAmount.val(parseFloat(unconstrainedPayAmount.val()));
                             if(Math.ceil(parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8)) > parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8))
                                 unconstrainedPayAmount.val(Math.ceil(parseFloat(unconstrainedPayAmount.val()) * Math.pow(10, 8)) / Math.pow(10, 8));
-                            submit.html("确认付款 " + parseFloat(unconstrainedPayAmount.val()) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
+                            submit.html("确认付款 " + parseFloat(parseFloat(unconstrainedPayAmount.val() / rate[UNIT] * rate['nas']).toFixed(8)) + ' NAS').prop('disabled', false).prop("onclick", null).off('click').click(function(){
                                 if(parseFloat(unconstrainedPayAmount.val()) > 0)
-                                    pay(index, $("#unconstrainedPayAmount").val(), $('#memo').val().trim()); });
+                                    pay(index, parseFloat(parseFloat(unconstrainedPayAmount.val() / rate[UNIT] * rate['nas']).toFixed(8)), $('#memo').val().trim()); });
                         } else  if (unconstrainedPayAmount.val() === '')  {
                             submit.html("请输入付款金额").prop('disabled', true);
                         }
@@ -1245,9 +1273,32 @@
     if(urlParams.has('address')){
         address = urlParams.get('address');
         if(!Account.isValidAddress(address)){
-            address = '';
+            address = localStorage.getItem('address') || '';
+        } else {
+            localStorage.setItem('address', address);
         }
     }
+
+    address = localStorage.getItem('address') || '';
+
+    window.addEventListener('message', function (e) {
+        if (e.data.data && !!e.data.data.account) {
+            addressWallet = e.data.data.account;
+            var addressURL = urlParams.get('address') || '';
+            if(!urlParams.has('address') || !Account.isValidAddress(addressURL)){
+                address = addressWallet;
+            }
+        }
+
+    });
+
+    window.postMessage({
+        "target": "contentscript",
+        "data": {},
+        "method": "getAccount",
+    }, "*");
+
+
     if(urlParams.has('index')){
         index = urlParams.get('index');
         $("#paid-panel").prop('hidden', false);
@@ -1287,26 +1338,14 @@
         $("#unlimitedAmount").prop('disabled', true);
         $("#unconstrainedAmount").prop('disabled', true);
 
-        window.addEventListener('message', function (e) {
-            if (e.data.data && !!e.data.data.account) {
-                if(address === '') address = e.data.data.account;
-                addressWallet = e.data.data.account;
-            }
-            if(address !== ''){
-                getSplitBill(index, function(){});
-            }
-        });
-
-        window.postMessage({
-            "target": "contentscript",
-            "data": {},
-            "method": "getAccount",
-        }, "*");
-
-        getSplitBill(index, function(){});
+        if(address !== ''){
+            getSplitBill(index, function(){});
+        }
     } else{
         submit.html("确认收款");
     }
+
+
 
     getInitiatorBill();
     getReceiverBill();
@@ -1425,12 +1464,12 @@
                 <h4 class="modal-title">通知</h4>
             </div>
             <div class="modal-body">
-                <p>您使用的是移动客户端，请您手动刷新获取最新支付信息。</p>
+                <p>您使用的是移动客户端，如果页面无法自动跳转，请您手动刷新获取最新支付信息。</p>
             </div>
             <div class="modal-footer" style="padding-top: 10px">
                 <br>
 
-                <div class="btn btn-primary ld-ext-right running">等待用户刷新
+                <div class="btn btn-primary ld-ext-right running">等待刷新
                     <div class="ld ld-hourglass ld-spin-fast"></div>
                 </div>
                 <button type="button" class="btn btn-default" data-dismiss="modal" onclick="refresh()">关闭</button>

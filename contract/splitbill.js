@@ -502,6 +502,7 @@ SplitBill.prototype = {
             if(!result){
                 throw new Error("Takeout failed.");
             }
+            this.transferEvent(true, Blockchain.transaction.to, from, amount);
             return true;
         } else {
             throw new Error("Permission denied.");
@@ -922,6 +923,17 @@ SplitBill.prototype = {
         } else {
             throw new Error("Split bill does not exist.");
         }
+    },
+
+    transferEvent: function (status, from, to, value) {
+        Event.Trigger('takeout', {
+            Status: status,
+            Transfer: {
+                from: from,
+                to: to,
+                value: value.toString(10)
+            }
+        });
     }
 
 };
