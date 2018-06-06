@@ -799,7 +799,6 @@
     var addressWallet = '';
     var initiatorBL = $("#initiatorBillList");
     function addInitiatorBill(bills){
-        $("#initiatorBillNum").html(bills.length);
         for(var i in bills){
             if(address !== ''){
                 var fun = 'getBillByIndex';
@@ -827,6 +826,7 @@
                                 initiatorBL.val(JSON.stringify(added));
                                 initiatorBL.append(html);
                             }
+                            $("#initiatorBillNum").html($("#initiatorBillList li").length);
                         }catch (err){
                             //result is the error message
                             console.log("error:" + err.message)
@@ -976,7 +976,6 @@
 
     var takerBL = $("#takerBillList");
     function addTakerBill(bills){
-        $("#takerBillNum").html(bills.length);
         for(var i in bills){
             if(address !== ''){
                 var fun = 'getBillByIndex';
@@ -1004,6 +1003,7 @@
                                 takerBL.val(JSON.stringify(added));
                                 takerBL.append(html);
                             }
+                            $("#takerBillNum").html($("#takerBillList li").length);
                         }catch (err){
                             //result is the error message
                             console.log("error:" + err.message)
@@ -1065,7 +1065,6 @@
 
     var payerBL = $("#payerBillList");
     function addPayerBill(bills){
-        $("#payerBillNum").html(bills.length);
         for(var i in bills){
             if(address !== ''){
                 var fun = 'getBillByIndex';
@@ -1093,6 +1092,7 @@
                                 payerBL.val(JSON.stringify(added));
                                 payerBL.append(html);
                             }
+                            $("#payerBillNum").html($("#payerBillList li").length);
                         }catch (err){
                             //result is the error message
                             console.log("error:" + err.message)
